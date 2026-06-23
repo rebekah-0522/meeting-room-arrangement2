@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foxconn Meeting Room Booking System | C01 & C02</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav" id="mainNav" style="display:none">
+    <div class="nav-inner">
+      <div class="nav-brand">Foxconn Meeting Rooms</div>
+      <div class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-page="home">Home</button>
+        <button class="nav-tab" data-page="schedule">Schedule</button>
+        <button class="nav-tab" data-page="book">Book Room</button>
+        <button class="nav-tab" data-page="my">My Bookings</button>
+        <button class="nav-tab hidden" data-page="admin" id="adminTab">EPM Admin</button>
+      </div>
+      <div class="nav-user">
+        <span id="userDisplay"></span>
+        <span class="badge hidden" id="notifBadge">0</span>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Login -->
+  <div id="loginPage" class="login-page">
+    <div class="login-card">
+      <h2>Meeting Room Booking System</h2>
+      <p class="subtitle">Foxconn C01 / C02 · 4F Unified Meeting Room Booking Platform</p>
+      <div class="form-group" style="text-align:left;margin-bottom:12px">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="name@foxconn.com">
+      </div>
+      <div class="form-group" style="text-align:left;margin-bottom:12px">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" id="loginBtn">Login</button>
+      <p style="font-size:13px;color:var(--text-secondary);margin-top:20px">
+        For special requests, please contact Meeting EPM<br>
+        <strong>Rebekah</strong> · <a href="mailto:rebekah.xy.he@mail.foxconn.com">rebekah.xy.he@mail.foxconn.com</a>
+      </p>
+    </div>
+  </div>
+
+  <main class="main hidden" id="mainContent">
+    <!-- Home -->
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <h1>Meeting Room Booking System</h1>
+        <p>21 meeting rooms across C01-4F & C02-4F · 30-minute time slots · Real-time schedule</p>
+        <div class="contact-bar">
+          For special requests, please contact Meeting EPM <strong>Rebekah</strong>:
+          <a href="mailto:rebekah.xy.he@mail.foxconn.com">rebekah.xy.he@mail.foxconn.com</a>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot webex"></span> Blue = Webex equipped</div>
+        <div class="legend-item"><span class="legend-dot free"></span> Available</div>
+        <div class="legend-item"><span class="legend-dot booked"></span> Booked</div>
+        <div class="legend-item"><span class="legend-dot pending"></span> Pending Approval</div>
+        <div class="legend-item"><span class="legend-dot epm"></span> EPM Exclusive</div>
+        <div class="legend-item"><span class="legend-dot war"></span> War Room</div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Meeting Rooms</h2>
+        <div class="toolbar">
+          <select id="homeBuildingFilter">
+            <option value="all">All Buildings</option>
+            <option value="C01">C01-4F</option>
+            <option value="C02">C02-4F</option>
+          </select>
+          <label><input type="checkbox" id="filterWebex"> Webex Only</label>
+        </div>
+        <div class="room-list" id="roomList"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Booking Rules</h2>
+        <ul style="margin:0;padding-left:20px;color:var(--text-secondary);font-size:15px;line-height:1.8">
+          <li>≤ 3 days: Self-booking allowed; > 3 days: Auto-email to Meeting EPM for approval</li>
+          <li>Bookings > 7 days: Only Meeting EPM can edit</li>
+          <li>Large rooms (40+ capacity): Only Meeting EPM can book</li>
+          <li>Cancellations > 3 times/month: Marked as "Bad Credit", requires EPM approval</li>
+          <li>Fixed 30-minute slots: 08:00 – 20:30</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Schedule -->
+    <section class="page" id="page-schedule">
+      <div class="card">
+        <h2 class="card-title">Schedule View</h2>
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <label class="field-label">View</label>
+            <select id="viewMode">
+              <option value="day">Day View</option>
+              <option value="week">Week View</option>
+              <option value="month">Month View</option>
+            </select>
+          </div>
+          <div class="toolbar-group">
+            <label class="field-label">Date</label>
+            <input type="date" id="scheduleDate">
+          </div>
+          <div class="toolbar-group">
+            <label class="field-label">Building</label>
+            <select id="scheduleBuilding">
+                <option value="all">All</option>
+                <option value="C01">C01-4F</option>
+                <option value="C02">C02-4F</option>
+              </select>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="exportWeekBtn">Export Week CSV</button>
+          <button class="btn btn-secondary btn-sm" id="exportMonthBtn">Export Month CSV</button>
+        </div>
+        <div id="scheduleContent"></div>
+      </div>
+    </section>
+
+    <!-- Book -->
+    <section class="page" id="page-book">
+      <div class="card">
+        <h2 class="card-title">Book a Meeting Room</h2>
+        <div id="bookAlerts"></div>
+        <form id="bookForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Building</label>
+              <select id="bookBuilding">
+                <option value="C01">C01-4F</option>
+                <option value="C02">C02-4F</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Room</label>
+              <select id="bookRoom" required></select>
+            </div>
+            <div class="form-group">
+              <label>Meeting Title</label>
+              <input type="text" id="bookTitle" required placeholder="e.g. Build Weekly Meeting">
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="bookStartDate" required>
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="bookEndDate" required>
+            </div>
+            <div class="form-group">
+              <label>Start Time</label>
+              <select id="bookStartSlot"></select>
+            </div>
+            <div class="form-group">
+              <label>End Time</label>
+              <select id="bookEndSlot"></select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Notes</label>
+            <textarea id="bookNote" placeholder="Optional"></textarea>
+          </div>
+          <div id="bookPreview" class="alert alert-info hidden" style="margin-top:16px"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Booking</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- My bookings -->
+    <section class="page" id="page-my">
+      <div class="card">
+        <h2 class="card-title">My Bookings</h2>
+        <div id="myCreditInfo"></div>
+        <div id="myBookingsList"></div>
+      </div>
+      <div class="card hidden" id="pendingApprovalsCard">
+        <h2 class="card-title">Pending Approvals <span class="badge" id="pendingCount">0</span></h2>
+        <div id="pendingList"></div>
+      </div>
+    </section>
+
+    <!-- Admin -->
+    <section class="page" id="page-admin">
+      <div class="card">
+        <h2 class="card-title">Build Phase Management</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Build Name</label>
+            <input type="text" id="buildName" placeholder="e.g. Build 3">
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="buildStart">
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="buildEnd">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="addBuildBtn">Add Build</button>
+          <button class="btn btn-secondary" id="exportBuildBtn">Export Current Build</button>
+        </div>
+        <div id="buildList" style="margin-top:16px"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Batch Import</h2>
+        <p class="card-subtitle">CSV format supported, auto-detects conflicts</p>
+        <div class="form-actions">
+          <button class="btn btn-secondary" id="downloadTemplateBtn">Download Import Template</button>
+          <label class="btn btn-primary" style="cursor:pointer">
+            Select CSV File
+            <input type="file" id="importFile" accept=".csv" hidden>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Room Properties Edit</h2>
+        <div id="roomEditList"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Operation Logs</h2>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" id="exportLogsBtn">Export Logs CSV</button>
+        </div>
+        <div class="schedule-wrap" style="max-height:400px;margin-top:12px">
+          <table class="log-table">
+            <thead><tr><th>Time</th><th>Operator</th><th>Action</th><th>Details</th></tr></thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Email Logs (Simulated)</h2>
+        <div id="mailLogList"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">System</h2>
+        <button class="btn btn-danger btn-sm" id="resetDataBtn">Reset Demo Data</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Notification</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js?v=4"></script>
+  <script src="js/storage.js?v=4"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/booking.js?v=4"></script>
+  <script src="js/export.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
+</body>
+</html>
