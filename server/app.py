@@ -732,11 +732,13 @@ def static_files(path):
 
 if __name__ == '__main__':
     try:
+        # Use PORT environment variable (Railway sets this) or default to 5000
+        port = int(os.environ.get('PORT', 5000))
         print('[DEBUG] Starting Flask server...')
-        print('[DEBUG] Host: 0.0.0.0')
-        print('[DEBUG] Port: 5000')
+        print(f'[DEBUG] Host: 0.0.0.0')
+        print(f'[DEBUG] Port: {port}')
         print('[DEBUG] Debug: False')
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:
         print('[ERROR] Flask server failed to start:', str(e))
         traceback.print_exc()
