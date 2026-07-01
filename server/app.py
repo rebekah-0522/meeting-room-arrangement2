@@ -452,7 +452,9 @@ def create_booking():
         })
     
     booking_id = str(uuid.uuid4())
-    needs_approval = user['role'] != 'epm'
+    
+    days = len(dates)
+    needs_approval = user['role'] != 'epm' and days > 3
     
     c.execute('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
                  start_slot, end_slot, note, status, created_at)

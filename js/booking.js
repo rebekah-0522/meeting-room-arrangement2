@@ -60,7 +60,7 @@ function needsApproval(user, startDate, endDate) {
     return { required: true, reason: 'Bad credit record (more than 3 cancellations this month). Booking requires Meeting EPM approval.' };
   }
   if (days > MAX_SELF_BOOK_DAYS) {
-    return { required: true, reason: `Booking exceeds ${MAX_SELF_BOOK_DAYS} days. Auto-email notification sent to Meeting EPM for approval.` };
+    return { required: true, reason: `Booking exceeds ${MAX_SELF_BOOK_DAYS} days. Waiting for Meeting EPM approval.` };
   }
   return { required: false, reason: '' };
 }
@@ -215,25 +215,6 @@ function createBooking(payload, user, options = {}) {
       title: '新预约待审批',
       message: `${user.name} (${user.email}) 申请 ${formatRoomLabel(room)} ${startDate}~${endDate}`,
       bookingId: booking.id
-    });
-    sendEmailNotification({
-      to: EPM_EMAIL,
-      subject: `[待审批] 会议室预约 - ${formatRoomLabel(room)}`,
-      body: buildEmailBody('pending_epm', booking, user, room, warnings)
-    });
-  } else {
-    sendEmailNotification({
-      to: user.email,
-      subject: `[已确认] 会议室预约成功 - ${formatRoomLabel(room)}`,
-      body: buildEmailBody('confirmed', booking, user, room, warnings)
-    });
-  }
-
-  if (warnings.length > 0) {
-    sendEmailNotification({
-      to: EPM_EMAIL,
-      subject: `[提醒] 长时段预约 - ${formatRoomLabel(room)}`,
-      body: buildEmailBody('warning_epm', booking, user, room, warnings)
     });
   }
 
