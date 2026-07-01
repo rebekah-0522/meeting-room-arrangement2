@@ -18,7 +18,10 @@ PROJECT_ROOT = os.path.dirname(BASE_DIR)
 
 print(f'[DEBUG] Project root: {PROJECT_ROOT}')
 
-app = Flask(__name__, static_folder=PROJECT_ROOT, static_url_path='')
+app = Flask(__name__, 
+            static_folder=PROJECT_ROOT, 
+            static_url_path='',
+            template_folder=PROJECT_ROOT)
 CORS(app)
 
 DATABASE = os.path.join(BASE_DIR, 'meeting_room.db')
