@@ -399,14 +399,20 @@
 
       const { booking, warnings, needsApproval: pending } = result;
       let msg = pending
-        ? `Booking submitted, waiting for Meeting EPM approval.<br>Notification email sent to ${EPM_EMAIL} (simulated).`
-        : `Booking successful!<br>Confirmation email sent to ${user.email} (simulated).`;
+        ? 'Booking submitted, waiting for Meeting EPM approval.'
+        : 'Booking successful! Your meeting room has been reserved.';
       if (warnings.length) msg += '<br><br>' + warnings.join('<br>');
 
       showModal(pending ? 'Pending Approval' : 'Booking Successful', `<div class="alert alert-success">${msg}</div>`, [
         { text: 'View My Bookings', class: 'btn-primary', onClick: () => navigate('my') },
         { text: 'Book Another', class: 'btn-secondary' }
       ]);
+
+      if (!pending) {
+        showToast('Success', 'Booking successful! Your meeting room has been reserved.', 'success');
+      } else {
+        showToast('Pending', 'Booking submitted! Waiting for Meeting EPM confirmation.', 'info');
+      }
 
       $('#bookForm').reset();
       initBookForm();
