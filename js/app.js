@@ -68,7 +68,44 @@
         if (result.success) {
           const user = result.user;
           setCurrentUser(user);
-          enterApp();
+          
+          if (password === '123456') {
+            showModal('Change Password', `
+              <p>Please change your initial password (123456) for security.</p>
+              <div class="form-group" style="text-align:left">
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password">
+              </div>
+            `, [{
+              text: 'Save',
+              class: 'btn-primary',
+              onClick: async () => {
+                const newPwd = $('#newPassword').value.trim();
+                if (!newPwd || newPwd === '123456') {
+                  showToast('Invalid Password', 'Please set a different password', 'warning');
+                  return;
+                }
+                try {
+                  const updateResult = await apiRequest(`/users/${user.id}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: newPwd })
+                  });
+                  if (updateResult.success) {
+                    showToast('Success', 'Password updated successfully', 'success');
+                    enterApp();
+                  } else {
+                    showToast('Error', updateResult.message || 'Failed to update password', 'danger');
+                  }
+                } catch (err) {
+                  console.error('Password update error:', err);
+                  showToast('Error', 'Unable to update password', 'danger');
+                }
+              }
+            }]);
+          } else {
+            enterApp();
+          }
         } else {
           showToast('Login Failed', result.message || 'Unknown error', 'danger');
         }

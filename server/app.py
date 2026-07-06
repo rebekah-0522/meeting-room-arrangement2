@@ -246,9 +246,11 @@ def update_password(user_id):
     if not new_password or new_password == '123456':
         return jsonify({'success': False, 'message': 'Invalid password'})
     
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
     conn = get_db()
     c = conn.cursor()
-    c.execute('UPDATE users SET password = ? WHERE id = ?', (new_password, user_id))
+    c.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, user_id))
     conn.commit()
     conn.close()
     
