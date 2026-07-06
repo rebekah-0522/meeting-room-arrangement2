@@ -339,13 +339,16 @@ function deleteBooking(bookingId, user) {
   return booking;
 }
 
-function getBookingsForDate(date, buildingFilter) {
+function getBookingsForDate(date, buildingFilter, roomFilter) {
   return getActiveBookings().filter(b => {
     const dates = getDateRange(b.startDate, b.endDate);
     if (!dates.includes(date)) return false;
     if (buildingFilter && buildingFilter !== 'all') {
       const room = getRoomById(b.roomId);
-      return room?.building === buildingFilter;
+      if (room?.building !== buildingFilter) return false;
+    }
+    if (roomFilter && roomFilter !== 'all') {
+      if (b.roomId !== roomFilter) return false;
     }
     return true;
   });

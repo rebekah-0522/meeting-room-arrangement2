@@ -286,24 +286,42 @@
     const mode = $('#viewMode').value;
     const date = $('#scheduleDate').value || todayStr();
     const building = $('#scheduleBuilding').value;
+    const room = $('#scheduleRoom').value;
     const container = $('#scheduleContent');
 
     if (mode === 'month') {
-      renderMonthView(container, date, building);
+      renderMonthView(container, date, building, room);
     } else if (mode === 'week') {
-      renderWeekView(container, date, building);
+      renderWeekView(container, date, building, room);
     } else {
-      renderDayView(container, date, building);
+      renderDayView(container, date, building, room);
     }
   }
 
-  function filteredRooms(building) {
-    if (building === 'all') return appState.rooms;
-    return appState.rooms.filter(r => r.building === building);
+  function filteredRooms(building, roomId) {
+    let rooms = building === 'all' ? appState.rooms : appState.rooms.filter(r => r.building === building);
+    if (roomId && roomId !== 'all') {
+      rooms = rooms.filter(r => r.id === roomId);
+    }
+    return rooms;
   }
 
-  function renderDayView(container, date, building) {
+  function updateScheduleRoomOptions() {
+    const building = $('#scheduleBuilding').value;
+    const $roomSelect = $('#scheduleRoom');
+    if (!$roomSelect) return;
+    
     const rooms = filteredRooms(building);
+    let html = '<option value="all">All</option>';
+    rooms.forEach(r => {
+      const suffix = r.hasWebex ? ' ★Webex' : '';
+      html += `<option value="${r.id}">${r.name} (${r.capacity} people)${suffix}</option>`;
+    });
+    $roomSelect.innerHTML = html;
+  }
+
+  function renderDayView(container, date, building, room) {
+    const rooms = filteredRooms(building, room);
     let html = `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
       <th class="time-col">Time Slot</th>`;
     rooms.forEach(room => {
@@ -328,9 +346,9 @@
     bindSlotClicks(container);
   }
 
-  function renderWeekView(container, baseDate, building) {
+  function renderWeekView(container, baseDate, building, room) {
     const dates = getWeekDates(baseDate);
-    const rooms = filteredRooms(building);
+    const rooms = filteredRooms(building, room);
     let html = `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
       <th class="time-col">Time Slot</th>`;
     dates.forEach(d => {
@@ -363,7 +381,7 @@
     bindSlotClicks(container);
   }
 
-  function renderMonthView(container, baseDate, building) {
+  function renderMonthView(container, baseDate, building, room) {
     const d = new Date(baseDate);
     const year = d.getFullYear();
     const month = d.getMonth() + 1;
@@ -380,7 +398,7 @@
     for (let i = 0; i < offset; i++) html += '<div class="month-day other"></div>';
 
     dates.forEach(date => {
-      const dayBookings = getBookingsForDate(date, building === 'all' ? null : building);
+      const dayBookings = getBookingsForDate(date, building === 'all' ? null : building, room === 'all' ? null : room);
       const isToday = date === todayStr();
       html += `<div class="month-day ${isToday ? 'today' : ''}" data-date="${date}">
         <div class="month-day-num">${parseInt(date.slice(8), 10)}</div>
@@ -832,7 +850,15 @@
       $scheduleDate.value = todayStr();
     }
     const $scheduleBuilding = $('#scheduleBuilding');
-    if ($scheduleBuilding) $scheduleBuilding.addEventListener('change', renderSchedule);
+    if ($scheduleBuilding) $scheduleBuilding.addEventListener('change', () => {
+      updateScheduleRoomOptions();
+      renderSchedule();
+    });
+
+    const $scheduleRoom = $('#scheduleRoom');
+    if ($scheduleRoom) $scheduleRoom.addEventListener('change', renderSchedule);
+
+    updateScheduleRoomOptions();
 
     const $exportWeekBtn = $('#exportWeekBtn');
     if ($exportWeekBtn) $exportWeekBtn.addEventListener('click', () => {
