@@ -41,11 +41,44 @@
           <input type="password" id="loginPassword" placeholder="Enter password">
         </div>
         <button class="btn btn-primary" style="width:100%;margin-top:8px" id="loginBtn">Login</button>
-        <p style="font-size:13px;color:var(--text-secondary);margin-top:16px;text-align:center">
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:12px;text-align:center">
+          <a href="#" id="showForgotLink" style="color:var(--primary);cursor:pointer">Forgot password?</a>
+        </p>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center">
           New user? <a href="#" id="showRegisterLink" style="color:var(--primary);cursor:pointer">Create account</a>
         </p>
       </div>
       
+      <div id="forgotForm" class="hidden">
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Email</label>
+          <input type="email" id="forgotEmail" placeholder="name@foxconn.com">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" id="forgotSendBtn">Send Verification Code</button>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center">
+          Back to <a href="#" id="showLoginFromForgot" style="color:var(--primary);cursor:pointer">Login</a>
+        </p>
+      </div>
+
+      <div id="resetForm" class="hidden">
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Email</label>
+          <input type="email" id="resetEmail" placeholder="name@foxconn.com" readonly>
+        </div>
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Verification Code</label>
+          <input type="text" id="resetCode" placeholder="Enter verification code">
+        </div>
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>New Password</label>
+          <input type="password" id="resetPassword" placeholder="Enter new password">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" id="resetSubmitBtn">Reset Password</button>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center">
+          Back to <a href="#" id="showLoginFromReset" style="color:var(--primary);cursor:pointer">Login</a>
+        </p>
+      </div>
+
       <div id="registerForm" class="hidden">
         <div class="form-group" style="text-align:left;margin-bottom:12px">
           <label>Name</label>
@@ -53,12 +86,11 @@
         </div>
         <div class="form-group" style="text-align:left;margin-bottom:12px">
           <label>Email</label>
-          <input type="email" id="registerEmail" placeholder="name@foxconn.com">
+          <input type="email" id="registerEmail" placeholder="any@email.com">
         </div>
-        <div class="form-group" style="text-align:left;margin-bottom:12px">
-          <label>Password</label>
-          <input type="password" id="registerPassword" placeholder="Enter password">
-        </div>
+        <p style="font-size:12px;color:var(--text-secondary);text-align:left;margin-bottom:12px">
+          Initial password will be <strong>123456</strong>. You must change it after login.
+        </p>
         <button class="btn btn-primary" style="width:100%;margin-top:8px" id="registerBtn">Register</button>
         <p style="font-size:13px;color:var(--text-secondary);margin-top:16px;text-align:center">
           Already have an account? <a href="#" id="showLoginLink" style="color:var(--primary);cursor:pointer">Login</a>
@@ -109,9 +141,8 @@
       <div class="card">
         <h2 class="card-title">Booking Rules</h2>
         <ul style="margin:0;padding-left:20px;color:var(--text-secondary);font-size:15px;line-height:1.8">
-          <li>≤ 3 days: Self-booking allowed; > 3 days: Waiting for Meeting EPM approval</li>
-          <li>Bookings > 7 days: Only Meeting EPM can edit</li>
-          <li>Large rooms (40+ capacity): Only Meeting EPM can book</li>
+          <li>&lt; 3 days: Self-booking allowed; ≥ 3 days: Waiting for Meeting EPM approval</li>
+          <li>Large rooms (40+ capacity): Waiting for Meeting EPM approval</li>
           <li>Cancellations > 3 times/month: Marked as "Bad Credit", requires EPM approval</li>
           <li>Fixed 30-minute slots: 08:00 – 20:30</li>
         </ul>
@@ -171,6 +202,14 @@
             <div class="form-group">
               <label>Meeting Title</label>
               <input type="text" id="bookTitle" required placeholder="e.g. Build Weekly Meeting">
+            </div>
+            <div class="form-group">
+              <label>Booking Contact Name</label>
+              <input type="text" id="bookContactName" required placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label>Contact Phone</label>
+              <input type="tel" id="bookContactPhone" required placeholder="11-digit mobile number">
             </div>
             <div class="form-group">
               <label>Start Date</label>
@@ -293,11 +332,11 @@
     </div>
   </div>
 
-  <script src="js/data.js?v=6"></script>
-  <script src="js/storage.js?v=6"></script>
-  <script src="js/api.js?v=6"></script>
-  <script src="js/booking.js?v=6"></script>
-  <script src="js/export.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/data.js?v=14"></script>
+  <script src="js/storage.js?v=14"></script>
+  <script src="js/api.js?v=14"></script>
+  <script src="js/booking.js?v=14"></script>
+  <script src="js/export.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
 </body>
 </html>

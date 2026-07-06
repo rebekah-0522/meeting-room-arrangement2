@@ -29,6 +29,24 @@ function clearCurrentUser() {
   sessionStorage.removeItem('currentUser');
 }
 
+function isValidPhone(phone) {
+  phone = phone.replace(/\s+/g, '');
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    return false;
+  }
+  const prefix = phone.substring(0, 3);
+  const validPrefixes = [
+    '130', '131', '132', '133', '134', '135', '136', '137', '138', '139',
+    '145', '147', '148',
+    '150', '151', '152', '153', '155', '156', '157', '158', '159',
+    '162', '165', '166', '167',
+    '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+    '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+    '191', '192', '193', '195', '196', '197', '198', '199'
+  ];
+  return validPrefixes.includes(prefix);
+}
+
 function isEPM(user) {
   if (!user) return false;
   return user.role === ROLES.epm || user.email?.toLowerCase() === EPM_EMAIL.toLowerCase();
@@ -46,21 +64,20 @@ function getEffectiveRole(user) {
 }
 
 function canBookRoom(user, room) {
-  if (isEPM(user)) return { allowed: true };
-  if (room.capacity >= LARGE_ROOM_CAPACITY) {
-    return { allowed: false, reason: `Rooms with ${room.capacity} capacity are EPM-only. Please contact Meeting EPM.` };
-  }
   return { allowed: true };
 }
 
-function needsApproval(user, startDate, endDate) {
+function needsApproval(user, startDate, endDate, room) {
   const days = countDays(startDate, endDate);
   if (isEPM(user)) return { required: false, reason: '' };
   if (isBadCredit(user.email)) {
     return { required: true, reason: 'Bad credit record (more than 3 cancellations this month). Booking requires Meeting EPM approval.' };
   }
-  if (days > MAX_SELF_BOOK_DAYS) {
-    return { required: true, reason: `Booking exceeds ${MAX_SELF_BOOK_DAYS} days. Waiting for Meeting EPM approval.` };
+  if (days >= MAX_SELF_BOOK_DAYS) {
+    return { required: true, reason: `Booking is ${days} days (≥ ${MAX_SELF_BOOK_DAYS} days). Waiting for Meeting EPM approval.` };
+  }
+  if (room && room.capacity >= LARGE_ROOM_CAPACITY) {
+    return { required: true, reason: `Room capacity ${room.capacity} (≥ ${LARGE_ROOM_CAPACITY}). Waiting for Meeting EPM approval.` };
   }
   return { required: false, reason: '' };
 }
@@ -68,9 +85,6 @@ function needsApproval(user, startDate, endDate) {
 function getBookingWarnings(startDate, endDate) {
   const days = countDays(startDate, endDate);
   const warnings = [];
-  if (days > EPM_ONLY_DAYS) {
-    warnings.push(`Booking exceeds ${EPM_ONLY_DAYS} days. Only Meeting EPM can edit this booking.`);
-  }
   return warnings;
 }
 
@@ -146,7 +160,7 @@ function summarizeConflicts(conflicts) {
 
 function createBooking(payload, user, options = {}) {
   console.log('createBooking called with:', payload, 'user:', user);
-  const { roomId, title, startDate, endDate, startSlot, endSlot, note, buildId } = payload;
+  const { roomId, title, startDate, endDate, startSlot, endSlot, note, buildId, contactName, contactPhone } = payload;
   const room = getRoomById(roomId);
   if (!room) throw new Error('会议室不存在');
 
@@ -158,7 +172,17 @@ function createBooking(payload, user, options = {}) {
     throw new Error(`Booking exceeds ${EPM_ONLY_DAYS} days. Please contact Meeting EPM (${EPM_NAME}: ${EPM_EMAIL}).`);
   }
 
-  const approval = needsApproval(user, startDate, endDate);
+  if (!contactName || !contactName.trim()) {
+    throw new Error('请填写会议预约人姓名');
+  }
+  if (!contactPhone || !contactPhone.trim()) {
+    throw new Error('请填写联系方式');
+  }
+  if (!isValidPhone(contactPhone)) {
+    throw new Error('无效的手机号码，请输入11位有效的中国移动、联通或电信手机号');
+  }
+
+  const approval = needsApproval(user, startDate, endDate, room);
   const conflicts = findConflicts(roomId, startDate, endDate, startSlot, endSlot);
 
   if (conflicts.length > 0 && !options.forceOverwrite) {
@@ -183,6 +207,8 @@ function createBooking(payload, user, options = {}) {
     title: title || '会议',
     bookerName: user.name,
     bookerEmail: user.email,
+    contactName: contactName.trim(),
+    contactPhone: contactPhone.replace(/\s+/g, ''),
     startDate,
     endDate,
     startSlot,

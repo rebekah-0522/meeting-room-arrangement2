@@ -7,7 +7,10 @@ import sys
 import traceback
 import os
 import bcrypt
-from datetime import datetime
+import smtplib
+import random
+import string
+from datetime import datetime, timedelta
 
 print('[DEBUG] Starting Flask application...')
 print('[DEBUG] Python version:', sys.version)
@@ -27,6 +30,29 @@ CORS(app)
 
 DATABASE = os.path.join(BASE_DIR, 'meeting_room.db')
 print(f'[DEBUG] Database path: {DATABASE}')
+
+reset_tokens = {}
+
+def generate_code():
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_email(to_email, code):
+    try:
+        smtp_server = 'smtp.foxconn.com'
+        smtp_port = 25
+        from_email = 'meeting-room-system@foxconn.com'
+        
+        subject = 'Meeting Room Booking System - Password Reset Verification Code'
+        body = f'Your verification code is: {code}\n\nThis code expires in 15 minutes.'
+        
+        msg = f'Subject: {subject}\n\n{body}'
+        
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.sendmail(from_email, to_email, msg)
+        return True
+    except Exception as e:
+        print('[ERROR] Failed to send email:', str(e))
+        return False
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -184,6 +210,70 @@ def login():
         }
     })
 
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email', '').strip().lower()
+    
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'})
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE email = ?', (email,))
+    user = c.fetchone()
+    conn.close()
+    
+    if not user:
+        return jsonify({'success': False, 'message': 'User not found'})
+    
+    code = generate_code()
+    reset_tokens[email] = {
+        'code': code,
+        'expires_at': datetime.now() + timedelta(minutes=15)
+    }
+    
+    if send_email(email, code):
+        return jsonify({'success': True, 'message': 'Verification code sent to your email'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to send email. Please contact Meeting EPM.'})
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    email = data.get('email', '').strip().lower()
+    code = data.get('code', '').strip()
+    new_password = data.get('password', '').strip()
+    
+    if not email or not code or not new_password:
+        return jsonify({'success': False, 'message': 'All fields are required'})
+    
+    if new_password == '123456':
+        return jsonify({'success': False, 'message': 'Invalid password'})
+    
+    token = reset_tokens.get(email)
+    if not token:
+        return jsonify({'success': False, 'message': 'Verification code not found or expired'})
+    
+    if datetime.now() > token['expires_at']:
+        del reset_tokens[email]
+        return jsonify({'success': False, 'message': 'Verification code expired'})
+    
+    if code != token['code']:
+        return jsonify({'success': False, 'message': 'Invalid verification code'})
+    
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET password = ? WHERE email = ?', (hashed_password, email))
+    conn.commit()
+    conn.close()
+    
+    del reset_tokens[email]
+    
+    return jsonify({'success': True, 'message': 'Password reset successfully'})
+
 @app.route('/api/users', methods=['GET'])
 def get_users():
     conn = get_db()
@@ -197,11 +287,10 @@ def get_users():
 def create_user():
     data = request.json
     email = data.get('email', '').strip().lower()
-    password = data.get('password', '').strip()
     name = data.get('name', '').strip()
     
-    if not email or not password:
-        return jsonify({'success': False, 'message': 'Email and password are required'})
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'})
     
     conn = get_db()
     c = conn.cursor()
@@ -211,7 +300,8 @@ def create_user():
         conn.close()
         return jsonify({'success': False, 'message': 'User already exists'})
     
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    default_password = '123456'
+    hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     user_id = str(uuid.uuid4())
     c.execute('''INSERT INTO users (id, email, name, password, role, credit, created_at)

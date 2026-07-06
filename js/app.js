@@ -130,10 +130,9 @@
     $('#registerBtn').addEventListener('click', async () => {
       const name = $('#registerName').value.trim();
       const email = $('#registerEmail').value.trim().toLowerCase();
-      const password = $('#registerPassword').value.trim();
       
-      if (!email || !password) {
-        showToast('Please fill in', 'Email and password are required', 'warning');
+      if (!email) {
+        showToast('Please fill in', 'Email is required', 'warning');
         return;
       }
       
@@ -141,11 +140,11 @@
         const result = await apiRequest('/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password })
+          body: JSON.stringify({ name, email })
         });
         
         if (result.success) {
-          showToast('Success', 'Account created! Please login.', 'success');
+          showToast('Success', 'Account created! Initial password is 123456.', 'success');
           $('#registerForm').classList.add('hidden');
           $('#loginForm').classList.remove('hidden');
           $('#loginEmail').value = email;
@@ -156,6 +155,83 @@
       } catch (err) {
         console.error('Registration error:', err);
         showToast('Registration Failed', 'Unable to connect to server', 'danger');
+      }
+    });
+
+    $('#showForgotLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#loginForm').classList.add('hidden');
+      $('#forgotForm').classList.remove('hidden');
+    });
+
+    $('#showLoginFromForgot').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#forgotForm').classList.add('hidden');
+      $('#loginForm').classList.remove('hidden');
+    });
+
+    $('#showLoginFromReset').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#resetForm').classList.add('hidden');
+      $('#loginForm').classList.remove('hidden');
+    });
+
+    $('#forgotSendBtn').addEventListener('click', async () => {
+      const email = $('#forgotEmail').value.trim().toLowerCase();
+      if (!email) {
+        showToast('Please fill in', 'Please enter your email', 'warning');
+        return;
+      }
+      try {
+        const result = await apiRequest('/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (result.success) {
+          showToast('Success', 'Verification code sent to your email', 'success');
+          $('#forgotForm').classList.add('hidden');
+          $('#resetForm').classList.remove('hidden');
+          $('#resetEmail').value = email;
+        } else {
+          showToast('Error', result.message || 'Failed to send verification code', 'danger');
+        }
+      } catch (err) {
+        console.error('Forgot password error:', err);
+        showToast('Error', 'Unable to connect to server', 'danger');
+      }
+    });
+
+    $('#resetSubmitBtn').addEventListener('click', async () => {
+      const email = $('#resetEmail').value.trim().toLowerCase();
+      const code = $('#resetCode').value.trim();
+      const newPassword = $('#resetPassword').value.trim();
+      if (!email || !code || !newPassword) {
+        showToast('Please fill in', 'Please enter all fields', 'warning');
+        return;
+      }
+      if (newPassword === '123456') {
+        showToast('Invalid Password', 'Please set a different password', 'warning');
+        return;
+      }
+      try {
+        const result = await apiRequest('/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code, password: newPassword })
+        });
+        if (result.success) {
+          showToast('Success', 'Password reset successfully', 'success');
+          $('#resetForm').classList.add('hidden');
+          $('#loginForm').classList.remove('hidden');
+          $('#loginEmail').value = email;
+          $('#loginPassword').value = '';
+        } else {
+          showToast('Error', result.message || 'Failed to reset password', 'danger');
+        }
+      } catch (err) {
+        console.error('Reset password error:', err);
+        showToast('Error', 'Unable to connect to server', 'danger');
       }
     });
   }
@@ -402,9 +478,11 @@
   function updateBookPreview() {
     const start = $('#bookStartDate').value;
     const end = $('#bookEndDate').value;
+    const roomId = $('#bookRoom').value;
     if (!start || !end) return;
     const days = countDays(start, end);
-    const approval = needsApproval(getCurrentUser(), start, end);
+    const room = roomId ? getRoomById(roomId) : null;
+    const approval = needsApproval(getCurrentUser(), start, end, room);
     const warnings = getBookingWarnings(start, end);
     const preview = $('#bookPreview');
     preview.classList.remove('hidden');
@@ -428,6 +506,8 @@
     const payload = {
       roomId: $('#bookRoom').value,
       title: $('#bookTitle').value.trim(),
+      contactName: $('#bookContactName').value.trim(),
+      contactPhone: $('#bookContactPhone').value.trim(),
       startDate: $('#bookStartDate').value,
       endDate: $('#bookEndDate').value,
       startSlot: $('#bookStartSlot').value,
@@ -449,26 +529,19 @@
       
       if (!result.success) {
         const conflictText = result.conflicts.map(c =>
-          `${c.date} is booked by <strong>${c.booker}</strong> (${c.slots.length} slots)`
-        ).join('<br>');
-        showModal('Conflict Detected', `
-          <p>The following time slots are already booked:</p>
-          <div class="alert alert-warning">${conflictText}</div>
-          <p>Please contact Meeting EPM or select other time slots.</p>
-        `, [{ text: 'OK', class: 'btn-primary' }]);
+          `${c.date} is booked by ${c.booker} (${c.slots.length} slots)`
+        ).join('\n');
+        alert('预约失败。会议室预定冲突：\n' + conflictText);
         return;
       }
 
       const { booking, warnings, needsApproval: pending } = result;
       let msg = pending
-        ? 'Booking submitted, waiting for Meeting EPM approval.'
-        : 'Booking successful! Your meeting room has been reserved.';
-      if (warnings.length) msg += '<br><br>' + warnings.join('<br>');
+        ? '预约成功，等待Meeting EPM确认。'
+        : '预约成功！您的会议室已被预定。';
+      if (warnings.length) msg += '\n\n' + warnings.join('\n');
 
-      showModal(pending ? 'Pending Approval' : 'Booking Successful', `<div class="alert alert-success">${msg}</div>`, [
-        { text: 'View My Bookings', class: 'btn-primary', onClick: () => navigate('my') },
-        { text: 'Book Another', class: 'btn-secondary' }
-      ]);
+      alert(msg);
 
       if (!pending) {
         showToast('Success', 'Booking successful! Your meeting room has been reserved.', 'success');
