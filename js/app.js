@@ -50,50 +50,75 @@
   }
 
   function initLogin() {
-    $('#loginBtn').addEventListener('click', () => {
+    $('#loginBtn').addEventListener('click', async () => {
       const email = $('#loginEmail').value.trim().toLowerCase();
       const password = $('#loginPassword').value.trim();
       if (!email || !password) {
         showToast('Please fill in', 'Please enter email and password', 'warning');
         return;
       }
-      const userRecord = getUserRecord(email);
-      const storedPassword = userRecord.password || '123456';
       
-      if (password !== storedPassword) {
-        showToast('Login Failed', 'Incorrect password', 'danger');
+      try {
+        const result = await apiRequest('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        if (result.success) {
+          const user = result.user;
+          setCurrentUser(user);
+          enterApp();
+        } else {
+          showToast('Login Failed', result.message || 'Unknown error', 'danger');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showToast('Login Failed', 'Unable to connect to server', 'danger');
+      }
+    });
+    
+    $('#showRegisterLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#loginForm').classList.add('hidden');
+      $('#registerForm').classList.remove('hidden');
+    });
+    
+    $('#showLoginLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#registerForm').classList.add('hidden');
+      $('#loginForm').classList.remove('hidden');
+    });
+    
+    $('#registerBtn').addEventListener('click', async () => {
+      const name = $('#registerName').value.trim();
+      const email = $('#registerEmail').value.trim().toLowerCase();
+      const password = $('#registerPassword').value.trim();
+      
+      if (!email || !password) {
+        showToast('Please fill in', 'Email and password are required', 'warning');
         return;
       }
       
-      let role = userRecord.role || ROLES.user;
-      if (email === EPM_EMAIL.toLowerCase()) role = ROLES.epm;
-      
-      const user = { name: userRecord.name || email.split('@')[0], email, role };
-      setCurrentUser(user);
-      
-      if (storedPassword === '123456') {
-        showModal('Change Password', `
-          <p>Please change your initial password (123456) for security.</p>
-          <div class="form-group" style="text-align:left">
-            <label>New Password</label>
-            <input type="password" id="newPassword" placeholder="Enter new password">
-          </div>
-        `, [{
-          text: 'Save',
-          class: 'btn-primary',
-          onClick: () => {
-            const newPwd = $('#newPassword').value.trim();
-            if (!newPwd || newPwd === '123456') {
-              showToast('Invalid Password', 'Please set a different password', 'warning');
-              return;
-            }
-            userRecord.password = newPwd;
-            saveUserRecord(userRecord);
-            enterApp();
-          }
-        }]);
-      } else {
-        enterApp();
+      try {
+        const result = await apiRequest('/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        
+        if (result.success) {
+          showToast('Success', 'Account created! Please login.', 'success');
+          $('#registerForm').classList.add('hidden');
+          $('#loginForm').classList.remove('hidden');
+          $('#loginEmail').value = email;
+          $('#loginPassword').value = '';
+        } else {
+          showToast('Registration Failed', result.message || 'Unknown error', 'danger');
+        }
+      } catch (err) {
+        console.error('Registration error:', err);
+        showToast('Registration Failed', 'Unable to connect to server', 'danger');
       }
     });
   }

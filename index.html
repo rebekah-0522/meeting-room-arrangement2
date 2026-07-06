@@ -30,15 +30,41 @@
     <div class="login-card">
       <h2>Meeting Room Booking System</h2>
       <p class="subtitle">Foxconn C01 / C02 · 4F Unified Meeting Room Booking Platform</p>
-      <div class="form-group" style="text-align:left;margin-bottom:12px">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="name@foxconn.com">
+      
+      <div id="loginForm">
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="name@foxconn.com">
+        </div>
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" id="loginBtn">Login</button>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:16px;text-align:center">
+          New user? <a href="#" id="showRegisterLink" style="color:var(--primary);cursor:pointer">Create account</a>
+        </p>
       </div>
-      <div class="form-group" style="text-align:left;margin-bottom:12px">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter password">
+      
+      <div id="registerForm" class="hidden">
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Name</label>
+          <input type="text" id="registerName" placeholder="Your name">
+        </div>
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Email</label>
+          <input type="email" id="registerEmail" placeholder="name@foxconn.com">
+        </div>
+        <div class="form-group" style="text-align:left;margin-bottom:12px">
+          <label>Password</label>
+          <input type="password" id="registerPassword" placeholder="Enter password">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" id="registerBtn">Register</button>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:16px;text-align:center">
+          Already have an account? <a href="#" id="showLoginLink" style="color:var(--primary);cursor:pointer">Login</a>
+        </p>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-top:8px" id="loginBtn">Login</button>
+      
       <p style="font-size:13px;color:var(--text-secondary);margin-top:20px">
         For special requests, please contact Meeting EPM<br>
         <strong>Rebekah</strong> · <a href="mailto:rebekah.xy.he@mail.foxconn.com">rebekah.xy.he@mail.foxconn.com</a>
@@ -267,11 +293,11 @@
     </div>
   </div>
 
-  <script src="js/data.js?v=4"></script>
-  <script src="js/storage.js?v=4"></script>
-  <script src="js/api.js?v=4"></script>
-  <script src="js/booking.js?v=4"></script>
-  <script src="js/export.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/data.js?v=5"></script>
+  <script src="js/storage.js?v=5"></script>
+  <script src="js/api.js?v=5"></script>
+  <script src="js/booking.js?v=5"></script>
+  <script src="js/export.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@ import uuid
 import sys
 import traceback
 import os
+import bcrypt
 from datetime import datetime
 
 print('[DEBUG] Starting Flask application...')
@@ -155,10 +156,18 @@ def login():
     if not user:
         return jsonify({'success': False, 'message': 'User not found'})
     
-    stored_password = user['password'] or '123456'
+    stored_password = user['password']
     
-    if password != stored_password:
-        return jsonify({'success': False, 'message': 'Incorrect password'})
+    if stored_password:
+        try:
+            if not bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+                return jsonify({'success': False, 'message': 'Incorrect password'})
+        except Exception:
+            if password != stored_password:
+                return jsonify({'success': False, 'message': 'Incorrect password'})
+    else:
+        if password != '123456':
+            return jsonify({'success': False, 'message': 'Incorrect password'})
     
     role = user['role']
     if email == 'rebekah.xy.he@mail.foxconn.com':
@@ -188,6 +197,11 @@ def get_users():
 def create_user():
     data = request.json
     email = data.get('email', '').strip().lower()
+    password = data.get('password', '').strip()
+    name = data.get('name', '').strip()
+    
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required'})
     
     conn = get_db()
     c = conn.cursor()
@@ -197,11 +211,13 @@ def create_user():
         conn.close()
         return jsonify({'success': False, 'message': 'User already exists'})
     
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
     user_id = str(uuid.uuid4())
     c.execute('''INSERT INTO users (id, email, name, password, role, credit, created_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?)''',
-              (user_id, email, data.get('name', email.split('@')[0]), 
-               data.get('password', '123456'), data.get('role', 'user'), 0,
+              (user_id, email, name or email.split('@')[0], 
+               hashed_password, data.get('role', 'user'), 0,
                datetime.now().isoformat()))
     
     conn.commit()
