@@ -536,6 +536,28 @@ textarea { resize: vertical; min-height: 80px; width: 100%; }
   flex-wrap: wrap;
 }
 
+#qrModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#qrModal:not(.hidden) {
+  display: flex;
+}
+
+#qrModal .modal-content {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
 /* Login */
 .login-page {
   min-height: calc(100vh - var(--nav-height));

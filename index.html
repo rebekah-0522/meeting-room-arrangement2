@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Foxconn Meeting Room Booking System | C01 & C02</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <nav class="nav" id="mainNav" style="display:none">
@@ -46,6 +47,9 @@
         </p>
         <p style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center">
           New user? <a href="#" id="showRegisterLink" style="color:var(--primary);cursor:pointer">Create account</a>
+        </p>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center">
+          <a href="#" id="showQRCodeLink" style="color:var(--primary);cursor:pointer">📱 Scan QR Code</a>
         </p>
       </div>
       
@@ -101,6 +105,24 @@
         For special requests, please contact Meeting EPM<br>
         <strong>Rebekah</strong> · <a href="mailto:rebekah.xy.he@mail.foxconn.com">rebekah.xy.he@mail.foxconn.com</a>
       </p>
+    </div>
+  </div>
+
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-content" style="width:320px">
+      <div class="modal-header">
+        <h3>Scan QR Code</h3>
+        <button class="modal-close" id="qrModalClose">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;padding:20px">
+          <div id="qrcode" style="display:inline-block;margin:0 auto"></div>
+          <p style="margin-top:16px;color:var(--text-secondary);font-size:13px">
+            Scan with your phone to open the booking system
+          </p>
+          <p id="qrUrl" style="margin-top:8px;color:var(--primary);font-size:12px;word-break:break-all"></p>
+        </div>
+      </div>
     </div>
   </div>
 

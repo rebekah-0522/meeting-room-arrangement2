@@ -60,11 +60,15 @@ def send_email(to_email, code):
         print('[ERROR] Failed to send email:', str(e))
         return False
 
+def ph(sql):
+    if DATABASE_URL:
+        return sql.replace('?', '%s')
+    return sql
+
 def get_db():
     if DATABASE_URL:
         import psycopg2
         conn = psycopg2.connect(DATABASE_URL)
-        conn.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
         return conn
     else:
         conn = sqlite3.connect(DATABASE)
@@ -174,10 +178,10 @@ def init_default_data():
                            room['has_webex'], room['has_projector'], room['room_type']))
             print('[DEBUG] Default rooms added')
     
-        c.execute('SELECT COUNT(*) FROM users WHERE email = ?', ('rebekah.xy.he@mail.foxconn.com',))
+        c.execute(ph('SELECT COUNT(*) FROM users WHERE email = ?'), ('rebekah.xy.he@mail.foxconn.com',))
         if c.fetchone()[0] == 0:
-            c.execute('''INSERT INTO users (id, email, name, password, role, created_at)
-                         VALUES (?, ?, ?, ?, ?, ?)''',
+            c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?)'''),
                       (str(uuid.uuid4()), 'rebekah.xy.he@mail.foxconn.com', 'Rebekah', '123456', 'epm', datetime.now().isoformat()))
             print('[DEBUG] Default user added')
     
@@ -203,7 +207,7 @@ def login():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM users WHERE email = ?', (email,))
+    c.execute(ph('SELECT * FROM users WHERE email = ?'), (email,))
     user = c.fetchone()
     conn.close()
     
@@ -248,7 +252,7 @@ def forgot_password():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM users WHERE email = ?', (email,))
+    c.execute(ph('SELECT * FROM users WHERE email = ?'), (email,))
     user = c.fetchone()
     conn.close()
     
@@ -294,7 +298,7 @@ def reset_password():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('UPDATE users SET password = ? WHERE email = ?', (hashed_password, email))
+    c.execute(ph('UPDATE users SET password = ? WHERE email = ?'), (hashed_password, email))
     conn.commit()
     conn.close()
     
@@ -323,7 +327,7 @@ def create_user():
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT COUNT(*) FROM users WHERE email = ?', (email,))
+    c.execute(ph('SELECT COUNT(*) FROM users WHERE email = ?'), (email,))
     if c.fetchone()[0] > 0:
         conn.close()
         return jsonify({'success': False, 'message': 'User already exists'})
@@ -332,8 +336,8 @@ def create_user():
     hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     user_id = str(uuid.uuid4())
-    c.execute('''INSERT INTO users (id, email, name, password, role, credit, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO users (id, email, name, password, role, credit, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)'''),
               (user_id, email, name or email.split('@')[0], 
                hashed_password, data.get('role', 'user'), 0,
                datetime.now().isoformat()))
@@ -347,7 +351,7 @@ def create_user():
 def get_user(user_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT id, email, name, role, credit FROM users WHERE id = ?', (user_id,))
+    c.execute(ph('SELECT id, email, name, role, credit FROM users WHERE id = ?'), (user_id,))
     user = c.fetchone()
     conn.close()
     
@@ -368,7 +372,7 @@ def update_password(user_id):
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, user_id))
+    c.execute(ph('UPDATE users SET password = ? WHERE id = ?'), (hashed_password, user_id))
     conn.commit()
     conn.close()
     
@@ -382,7 +386,7 @@ def get_rooms():
     c = conn.cursor()
     
     if building:
-        c.execute('SELECT * FROM rooms WHERE building = ?', (building,))
+        c.execute(ph('SELECT * FROM rooms WHERE building = ?'), (building,))
     else:
         c.execute('SELECT * FROM rooms')
     
@@ -401,7 +405,7 @@ def get_rooms():
 def get_room(room_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM rooms WHERE id = ?', (room_id,))
+    c.execute(ph('SELECT * FROM rooms WHERE id = ?'), (room_id,))
     room = c.fetchone()
     conn.close()
     
@@ -434,7 +438,7 @@ def update_room(room_id):
     
     if updates:
         params.append(room_id)
-        c.execute(f'UPDATE rooms SET {", ".join(updates)} WHERE id = ?', params)
+        c.execute(ph(f'UPDATE rooms SET {", ".join(updates)} WHERE id = ?'), params)
         conn.commit()
     
     conn.close()
@@ -502,7 +506,7 @@ def get_bookings():
     
     query += ' ORDER BY b.start_date, b.start_slot'
     
-    c.execute(query, params)
+    c.execute(ph(query), params)
     bookings = []
     for row in c.fetchall():
         booking = dict(row)
@@ -515,7 +519,7 @@ def get_bookings():
 def get_booking(booking_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT b.*, u.name as booker_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.id = ?', (booking_id,))
+    c.execute(ph('SELECT b.*, u.name as booker_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.id = ?'), (booking_id,))
     booking = c.fetchone()
     conn.close()
     
@@ -549,13 +553,13 @@ def create_booking():
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM rooms WHERE id = ?', (room_id,))
+    c.execute(ph('SELECT * FROM rooms WHERE id = ?'), (room_id,))
     room = c.fetchone()
     if not room:
         conn.close()
         return jsonify({'success': False, 'message': 'Room not found'})
     
-    c.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+    c.execute(ph('SELECT * FROM users WHERE id = ?'), (user_id,))
     user = c.fetchone()
     if not user:
         conn.close()
@@ -566,10 +570,10 @@ def create_booking():
     
     conflicts = []
     for date in dates:
-        c.execute('''SELECT b.id, u.name as booker_name, b.start_slot, b.end_slot 
+        c.execute(ph('''SELECT b.id, u.name as booker_name, b.start_slot, b.end_slot 
                      FROM bookings b LEFT JOIN users u ON b.user_id = u.id
                      WHERE b.room_id = ? AND b.start_date <= ? AND b.end_date >= ?
-                     AND b.status IN ('pending', 'approved')''',
+                     AND b.status IN ('pending', 'approved')'''),
                   (room_id, date, date))
         
         existing_bookings = c.fetchall()
@@ -595,15 +599,15 @@ def create_booking():
     days = len(dates)
     needs_approval = user['role'] != 'epm' and days > 3
     
-    c.execute('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
+    c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
                  start_slot, end_slot, note, status, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
               (booking_id, room_id, user_id, title, start_date, end_date,
                start_slot, end_slot, note, 'pending' if needs_approval else 'approved',
                datetime.now().isoformat()))
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Create Booking', f'{title} - {room_id}', user['name'], datetime.now().isoformat()))
     
     conn.commit()
@@ -633,7 +637,7 @@ def approve_booking(booking_id):
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
+    c.execute(ph('SELECT * FROM bookings WHERE id = ?'), (booking_id,))
     booking = c.fetchone()
     
     if not booking:
@@ -644,11 +648,11 @@ def approve_booking(booking_id):
         conn.close()
         return jsonify({'success': False, 'message': 'Booking is not pending'})
     
-    c.execute('UPDATE bookings SET status = ?, approved_at = ? WHERE id = ?',
+    c.execute(ph('UPDATE bookings SET status = ?, approved_at = ? WHERE id = ?'),
               ('approved', datetime.now().isoformat(), booking_id))
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Approve Booking', booking['title'], 'EPM', datetime.now().isoformat()))
     
     conn.commit()
@@ -661,7 +665,7 @@ def reject_booking(booking_id):
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
+    c.execute(ph('SELECT * FROM bookings WHERE id = ?'), (booking_id,))
     booking = c.fetchone()
     
     if not booking:
@@ -672,11 +676,11 @@ def reject_booking(booking_id):
         conn.close()
         return jsonify({'success': False, 'message': 'Booking is not pending'})
     
-    c.execute('UPDATE bookings SET status = ?, approved_at = ? WHERE id = ?',
+    c.execute(ph('UPDATE bookings SET status = ?, approved_at = ? WHERE id = ?'),
               ('rejected', datetime.now().isoformat(), booking_id))
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Reject Booking', booking['title'], 'EPM', datetime.now().isoformat()))
     
     conn.commit()
@@ -689,7 +693,7 @@ def cancel_booking(booking_id):
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
+    c.execute(ph('SELECT * FROM bookings WHERE id = ?'), (booking_id,))
     booking = c.fetchone()
     
     if not booking:
@@ -700,14 +704,14 @@ def cancel_booking(booking_id):
         conn.close()
         return jsonify({'success': False, 'message': 'Booking is already cancelled or rejected'})
     
-    c.execute('UPDATE bookings SET status = ?, cancelled_at = ? WHERE id = ?',
+    c.execute(ph('UPDATE bookings SET status = ?, cancelled_at = ? WHERE id = ?'),
               ('cancelled', datetime.now().isoformat(), booking_id))
     
-    c.execute('SELECT name FROM users WHERE id = ?', (booking['user_id'],))
+    c.execute(ph('SELECT name FROM users WHERE id = ?'), (booking['user_id'],))
     user = c.fetchone()
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Cancel Booking', booking['title'], user['name'] if user else 'Unknown', datetime.now().isoformat()))
     
     conn.commit()
@@ -771,7 +775,7 @@ def set_current_build(build_id):
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM builds WHERE id = ?', (build_id,))
+    c.execute(ph('SELECT * FROM builds WHERE id = ?'), (build_id,))
     build = c.fetchone()
     
     if not build:
@@ -779,10 +783,10 @@ def set_current_build(build_id):
         return jsonify({'success': False, 'message': 'Build not found'})
     
     c.execute('UPDATE builds SET is_current = 0 WHERE is_current = 1')
-    c.execute('UPDATE builds SET is_current = 1 WHERE id = ?', (build_id,))
+    c.execute(ph('UPDATE builds SET is_current = 1 WHERE id = ?'), (build_id,))
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Switch Build', build['name'], 'EPM', datetime.now().isoformat()))
     
     conn.commit()
@@ -795,17 +799,17 @@ def delete_build(build_id):
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT * FROM builds WHERE id = ?', (build_id,))
+    c.execute(ph('SELECT * FROM builds WHERE id = ?'), (build_id,))
     build = c.fetchone()
     
     if not build:
         conn.close()
         return jsonify({'success': False, 'message': 'Build not found'})
     
-    c.execute('DELETE FROM builds WHERE id = ?', (build_id,))
+    c.execute(ph('DELETE FROM builds WHERE id = ?'), (build_id,))
     
-    c.execute('''INSERT INTO logs (action, detail, operator, timestamp)
-                 VALUES (?, ?, ?, ?)''',
+    c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
+                 VALUES (?, ?, ?, ?)'''),
               ('Delete Build', build['name'], 'EPM', datetime.now().isoformat()))
     
     conn.commit()
@@ -827,13 +831,13 @@ def get_booking_stats():
     conn = get_db()
     c = conn.cursor()
     
-    c.execute('SELECT COUNT(*) FROM bookings WHERE status = ?', ('approved',))
+    c.execute(ph('SELECT COUNT(*) FROM bookings WHERE status = ?'), ('approved',))
     approved = c.fetchone()[0]
     
-    c.execute('SELECT COUNT(*) FROM bookings WHERE status = ?', ('pending',))
+    c.execute(ph('SELECT COUNT(*) FROM bookings WHERE status = ?'), ('pending',))
     pending = c.fetchone()[0]
     
-    c.execute('SELECT COUNT(*) FROM bookings WHERE status = ?', ('rejected',))
+    c.execute(ph('SELECT COUNT(*) FROM bookings WHERE status = ?'), ('rejected',))
     rejected = c.fetchone()[0]
     
     conn.close()

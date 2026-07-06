@@ -234,6 +234,43 @@
         showToast('Error', 'Unable to connect to server', 'danger');
       }
     });
+
+    $('#showQRCodeLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      showQRCode();
+    });
+
+    $('#qrModalClose').addEventListener('click', () => {
+      $('#qrModal').classList.add('hidden');
+    });
+
+    $('#qrModal').addEventListener('click', (e) => {
+      if (e.target.id === 'qrModal') {
+        $('#qrModal').classList.add('hidden');
+      }
+    });
+  }
+
+  function showQRCode() {
+    const url = window.location.origin + window.location.pathname;
+    const qrContainer = $('#qrcode');
+    qrContainer.innerHTML = '';
+    
+    try {
+      new QRCode(qrContainer, {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      $('#qrUrl').textContent = url;
+      $('#qrModal').classList.remove('hidden');
+    } catch (err) {
+      console.error('QR code generation error:', err);
+      showToast('Error', 'Failed to generate QR code', 'danger');
+    }
   }
 
   function enterApp() {
