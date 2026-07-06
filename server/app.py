@@ -28,8 +28,14 @@ app = Flask(__name__,
             template_folder=PROJECT_ROOT)
 CORS(app)
 
+DATABASE_URL = os.environ.get('DATABASE_URL')
 DATABASE = os.path.join(BASE_DIR, 'meeting_room.db')
-print(f'[DEBUG] Database path: {DATABASE}')
+
+if DATABASE_URL:
+    print('[DEBUG] Using PostgreSQL database (Railway)')
+    print(f'[DEBUG] Database URL: {DATABASE_URL[:30]}...')
+else:
+    print(f'[DEBUG] Using SQLite database: {DATABASE}')
 
 reset_tokens = {}
 
@@ -55,21 +61,33 @@ def send_email(to_email, code):
         return False
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
+        return conn
+    else:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     try:
         print('[DEBUG] Initializing database...')
-        conn = sqlite3.connect(DATABASE)
+        conn = get_db()
         c = conn.cursor()
         
         print('[DEBUG] Creating users table...')
-        c.execute('''CREATE TABLE IF NOT EXISTS users
-                     (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT, 
-                      password TEXT, role TEXT DEFAULT 'user', credit INTEGER DEFAULT 0,
-                      last_booking_date TEXT, created_at TEXT)''')
+        if DATABASE_URL:
+            c.execute('''CREATE TABLE IF NOT EXISTS users
+                         (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT, 
+                          password TEXT, role TEXT DEFAULT 'user', credit INTEGER DEFAULT 0,
+                          last_booking_date TEXT, created_at TEXT)''')
+        else:
+            c.execute('''CREATE TABLE IF NOT EXISTS users
+                         (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT, 
+                          password TEXT, role TEXT DEFAULT 'user', credit INTEGER DEFAULT 0,
+                          last_booking_date TEXT, created_at TEXT)''')
         
         print('[DEBUG] Creating rooms table...')
         c.execute('''CREATE TABLE IF NOT EXISTS rooms
@@ -90,14 +108,24 @@ def init_db():
                       is_current INTEGER DEFAULT 0, created_at TEXT)''')
         
         print('[DEBUG] Creating logs table...')
-        c.execute('''CREATE TABLE IF NOT EXISTS logs
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT, detail TEXT,
-                      operator TEXT, timestamp TEXT)''')
+        if DATABASE_URL:
+            c.execute('''CREATE TABLE IF NOT EXISTS logs
+                         (id SERIAL PRIMARY KEY, action TEXT, detail TEXT,
+                          operator TEXT, timestamp TEXT)''')
+        else:
+            c.execute('''CREATE TABLE IF NOT EXISTS logs
+                         (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT, detail TEXT,
+                          operator TEXT, timestamp TEXT)''')
         
         print('[DEBUG] Creating notifications table...')
-        c.execute('''CREATE TABLE IF NOT EXISTS notifications
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, type TEXT,
-                      message TEXT, read INTEGER DEFAULT 0, created_at TEXT)''')
+        if DATABASE_URL:
+            c.execute('''CREATE TABLE IF NOT EXISTS notifications
+                         (id SERIAL PRIMARY KEY, user_id TEXT, type TEXT,
+                          message TEXT, read INTEGER DEFAULT 0, created_at TEXT)''')
+        else:
+            c.execute('''CREATE TABLE IF NOT EXISTS notifications
+                         (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, type TEXT,
+                          message TEXT, read INTEGER DEFAULT 0, created_at TEXT)''')
         
         conn.commit()
         conn.close()
