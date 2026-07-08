@@ -293,6 +293,7 @@
           title: b.title,
           bookerName: b.booker_name,
           bookerEmail: b.booker_email || '',
+          contactName: b.contact_name || b.booker_name || '',
           startDate: b.start_date,
           endDate: b.end_date,
           startSlot: b.start_slot,
@@ -400,9 +401,10 @@
       rooms.forEach(room => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         const cls = status === 'free' ? 'free' : status;
-        const title = booking ? `${booking.bookerName}: ${booking.title}` : '';
+        const dept = booking?.contactName || booking?.bookerName || 'Unknown';
+        const title = booking ? `${dept}: ${booking.title}` : '';
         html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}" title="${title}">`;
-        if (booking) html += `<span class="cell-title">${booking.bookerName?.split(' ')[0] || 'Booked'}</span>`;
+        if (booking) html += `<span class="cell-title">${dept}</span>`;
         html += '</td>';
       });
       html += '</tr>';
@@ -503,7 +505,8 @@
           showModal('预约详情', `
             <p><strong>${booking.title}</strong></p>
             <p>会议室：${formatRoomLabel(roomObj)}</p>
-            <p>预约人：${booking.bookerName} (${booking.bookerEmail})</p>
+            <p>部门：${booking.contactName || booking.bookerName}</p>
+            <p>会议类型：${booking.title}</p>
             <p>日期：${booking.startDate} ~ ${booking.endDate}</p>
             <p>时段：${booking.startSlot} - ${booking.endSlot}</p>
             <p>状态：<span class="status-pill ${booking.status}">${statusLabel(booking.status)}</span></p>
