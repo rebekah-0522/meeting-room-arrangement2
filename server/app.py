@@ -767,7 +767,7 @@ def migrate_db():
 @app.route('/api/bookings/import', methods=['POST'])
 def import_bookings_api():
     conn = get_db()
-    c = conn.cursor()
+    c = get_cursor(conn)
     
     users_data = [
         {'email': 'bay@example.com', 'name': 'Bay'},
