@@ -77,12 +77,17 @@ def get_db():
     if DATABASE_URL:
         import psycopg2
         conn = psycopg2.connect(DATABASE_URL)
-        conn.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
         return conn
     else:
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = sqlite3.Row
         return conn
+
+def get_cursor(conn):
+    c = conn.cursor()
+    if DATABASE_URL:
+        c.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
+    return c
 
 def init_db():
     try:
@@ -743,8 +748,9 @@ def cancel_booking(booking_id):
 
 @app.route('/api/bookings/import', methods=['POST'])
 def import_bookings_api():
-    conn = get_db()
-    c = conn.cursor()
+    try:
+        conn = get_db()
+        c = conn.cursor()
     
     users_data = [
         {'email': 'bay@example.com', 'name': 'Bay'},
@@ -864,10 +870,14 @@ def import_bookings_api():
                    booking['start_slot'], booking['end_slot'], '', 'approved', datetime.now().isoformat()))
         count += 1
     
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
+    except Exception as e:
+        print('[ERROR] Import error:', str(e))
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/builds', methods=['GET'])
 def get_builds():
