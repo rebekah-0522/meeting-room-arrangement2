@@ -355,8 +355,34 @@ function getBookingsForRoomDate(roomId, date) {
   return getActiveBookings().filter(b => bookingOccupiesSlot(b, date, TIME_SLOTS[0]) || getDateRange(b.startDate, b.endDate).includes(date) && b.roomId === roomId);
 }
 
+function buildBookingIndex() {
+  const index = new Map();
+  getActiveBookings().forEach(b => {
+    const dates = getDateRange(b.startDate, b.endDate);
+    const slots = b.slots || slotsBetween(b.startSlot, b.endSlot);
+    dates.forEach(date => {
+      slots.forEach(slot => {
+        const key = `${b.roomId}_${date}_${slot}`;
+        if (!index.has(key)) {
+          index.set(key, b);
+        }
+      });
+    });
+  });
+  return index;
+}
+
+let bookingIndex = null;
+let lastIndexTime = 0;
+
 function getSlotStatus(roomId, date, slot) {
-  const booking = getActiveBookings().find(b => bookingOccupiesSlot(b, date, slot) && b.roomId === roomId);
+  const now = Date.now();
+  if (!bookingIndex || now - lastIndexTime > 1000) {
+    bookingIndex = buildBookingIndex();
+    lastIndexTime = now;
+  }
+  const key = `${roomId}_${date}_${slot}`;
+  const booking = bookingIndex.get(key);
   if (!booking) return { status: 'free', booking: null };
   return {
     status: booking.status === BOOKING_STATUS.pending ? 'pending' : 'booked',
