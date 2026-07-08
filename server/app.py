@@ -12,6 +12,14 @@ import random
 import string
 from datetime import datetime, timedelta
 
+try:
+    import qrcode
+    from io import BytesIO
+    QRCODE_AVAILABLE = True
+except ImportError:
+    QRCODE_AVAILABLE = False
+    print('[WARN] qrcode library not installed, QR code generation disabled')
+
 print('[DEBUG] Starting Flask application...')
 print('[DEBUG] Python version:', sys.version)
 
@@ -874,6 +882,42 @@ def static_files(path):
     if os.path.exists(file_path):
         return send_from_directory(PROJECT_ROOT, path)
     return jsonify({'error': 'File not found'}), 404
+
+@app.route('/api/qrcode')
+def generate_qrcode():
+    if not QRCODE_AVAILABLE:
+        return jsonify({'success': False, 'message': 'QR code library not installed'}), 500
+    
+    custom_url = request.args.get('url')
+    
+    if custom_url:
+        qr_url = custom_url
+    else:
+        scheme = request.headers.get('X-Forwarded-Proto', 'http')
+        host = request.headers.get('X-Forwarded-Host', request.host)
+        qr_url = f'{scheme}://{host}'
+    
+    print(f'[DEBUG] Generating QR code for: {qr_url}')
+    
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_url)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color='black', back_color='white')
+    img_bytes = BytesIO()
+    img.save(img_bytes, format='PNG')
+    img_bytes.seek(0)
+    
+    response = make_response(img_bytes.read())
+    response.headers['Content-Type'] = 'image/png'
+    response.headers['Content-Disposition'] = f'inline; filename=qrcode.png'
+    
+    return response
 
 if __name__ == '__main__':
     try:

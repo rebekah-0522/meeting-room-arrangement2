@@ -3,8 +3,7 @@
  */
 
 function getCurrentUser() {
-  let raw = localStorage.getItem('currentUser');
-  if (!raw) raw = sessionStorage.getItem('currentUser');
+  let raw = sessionStorage.getItem('currentUser');
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -14,7 +13,6 @@ function getCurrentUser() {
 }
 
 function setCurrentUser(user) {
-  localStorage.setItem('currentUser', JSON.stringify(user));
   sessionStorage.setItem('currentUser', JSON.stringify(user));
   if (user?.email) {
     const record = getUserRecord(user.email);
@@ -25,7 +23,6 @@ function setCurrentUser(user) {
 }
 
 function clearCurrentUser() {
-  localStorage.removeItem('currentUser');
   sessionStorage.removeItem('currentUser');
 }
 
