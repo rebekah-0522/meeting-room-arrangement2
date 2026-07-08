@@ -584,24 +584,31 @@
       
       if (!result.success) {
         const conflictText = result.conflicts.map(c =>
-          `${c.date} is booked by ${c.booker} (${c.slots.length} slots)`
-        ).join('\n');
-        alert('预约失败。会议室预定冲突：\n' + conflictText);
+          `在 <strong>${c.date}</strong> 已被 <strong>${c.booker}</strong> 预约`
+        ).join('<br>');
+        showModal('预约失败', `
+          <p>以下会议室存在时间冲突：</p>
+          <div class="alert alert-danger">${conflictText}</div>
+          <p>请重新选择时间或会议室。</p>
+        `, [{ text: '确定', class: 'btn-primary' }]);
         return;
       }
 
       const { booking, warnings, needsApproval: pending } = result;
       let msg = pending
-        ? '预约成功，等待Meeting EPM确认。'
-        : '预约成功！您的会议室已被预定。';
-      if (warnings.length) msg += '\n\n' + warnings.join('\n');
+        ? '<div class="alert alert-info">预约成功，等待Meeting Room Admin确认。</div>'
+        : '<div class="alert alert-success">预约成功！您的会议室已被预定。</div>';
+      if (warnings.length) msg += '<br><br>' + warnings.map(w => `<div class="alert alert-warning">${w}</div>`).join('');
 
-      alert(msg);
+      showModal(pending ? '等待确认' : '预约成功', msg, [
+        { text: '查看我的预约', class: 'btn-primary', onClick: () => navigate('my') },
+        { text: '继续预约', class: 'btn-secondary' }
+      ]);
 
       if (!pending) {
         showToast('Success', 'Booking successful! Your meeting room has been reserved.', 'success');
       } else {
-        showToast('Pending', 'Booking submitted! Waiting for Meeting EPM confirmation.', 'info');
+        showToast('Pending', 'Booking submitted! Waiting for Meeting Room Admin confirmation.', 'info');
       }
 
       $('#bookForm').reset();

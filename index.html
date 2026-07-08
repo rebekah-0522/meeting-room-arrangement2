@@ -228,12 +228,39 @@
               <select id="bookRoom" required></select>
             </div>
             <div class="form-group">
-              <label>Meeting Title</label>
-              <input type="text" id="bookTitle" required placeholder="e.g. Build Weekly Meeting">
+              <label>Meeting Type</label>
+              <select id="bookTitle" required>
+                <option value="" disabled selected>Select meeting type</option>
+                <option value="Sync up">Sync up</option>
+                <option value="Wrap up">Wrap up</option>
+                <option value="FA Meeting">FA Meeting</option>
+                <option value="Kick off">Kick off</option>
+                <option value="MIL">MIL</option>
+                <option value="Close Meeting">Close Meeting</option>
+                <option value="CTB">CTB</option>
+                <option value="IDL">IDL</option>
+                <option value="Offline">Offline</option>
+                <option value="OFI">OFI</option>
+                <option value="Others">Others</option>
+              </select>
             </div>
             <div class="form-group">
-              <label>Booking Contact Name</label>
-              <input type="text" id="bookContactName" required placeholder="Your name">
+              <label>Dept.</label>
+              <select id="bookContactName" required>
+                <option value="" disabled selected>Select department</option>
+                <option value="EPM">EPM</option>
+                <option value="PD">PD</option>
+                <option value="R&D">R&D</option>
+                <option value="PE">PE</option>
+                <option value="IE">IE</option>
+                <option value="HWTE">HWTE</option>
+                <option value="RF">RF</option>
+                <option value="IQC">IQC</option>
+                <option value="SQE">SQE</option>
+                <option value="OQC">OQC</option>
+                <option value="KPD">KPD</option>
+                <option value="Others">Others</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Contact Phone</label>
