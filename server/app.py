@@ -188,9 +188,11 @@ def init_default_data():
     
         c.execute(ph('SELECT COUNT(*) FROM users WHERE email = ?'), ('rebekah.xy.he@mail.foxconn.com',))
         if c.fetchone()[0] == 0:
+            default_password = '123456'
+            hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
                          VALUES (?, ?, ?, ?, ?, ?)'''),
-                      (str(uuid.uuid4()), 'rebekah.xy.he@mail.foxconn.com', 'Rebekah', '123456', 'epm', datetime.now().isoformat()))
+                      (str(uuid.uuid4()), 'rebekah.xy.he@mail.foxconn.com', 'Rebekah', hashed_password, 'epm', datetime.now().isoformat()))
             print('[DEBUG] Default user added')
     
         conn.commit()
