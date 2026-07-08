@@ -77,6 +77,7 @@ def get_db():
     if DATABASE_URL:
         import psycopg2
         conn = psycopg2.connect(DATABASE_URL)
+        conn.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
         return conn
     else:
         conn = sqlite3.connect(DATABASE)
