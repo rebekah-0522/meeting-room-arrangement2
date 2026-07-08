@@ -729,6 +729,134 @@ def cancel_booking(booking_id):
     
     return jsonify({'success': True, 'message': 'Booking cancelled successfully'})
 
+@app.route('/api/bookings/import', methods=['POST'])
+def import_bookings_api():
+    conn = get_db()
+    c = conn.cursor()
+    
+    users_data = [
+        {'email': 'bay@example.com', 'name': 'Bay'},
+        {'email': 'ray@example.com', 'name': 'Ray'},
+        {'email': 'kitsa@example.com', 'name': 'Kitsa'},
+        {'email': 'chester@example.com', 'name': 'Chester'},
+        {'email': 'fanxie@example.com', 'name': 'Fan Xie'},
+        {'email': 'brynn@example.com', 'name': 'Brynn'},
+        {'email': 'amber@example.com', 'name': 'Amber'},
+        {'email': 'gary@example.com', 'name': 'Gary'},
+        {'email': 'ella@example.com', 'name': 'Ella'},
+        {'email': 'govinda@example.com', 'name': 'Govinda'},
+        {'email': 'rose@example.com', 'name': 'Rose Wang'},
+        {'email': 'funnycheng@example.com', 'name': 'Funny Cheng'},
+        {'email': 'melody@example.com', 'name': 'Melody Wei'},
+        {'email': 'patty@example.com', 'name': 'Patty'},
+        {'email': 'zac@example.com', 'name': 'Zac'},
+        {'email': 'rachel@example.com', 'name': 'Rachel'},
+        {'email': 'ee_user@example.com', 'name': 'EE User'},
+    ]
+    
+    user_map = {}
+    for user in users_data:
+        c.execute(ph('SELECT id FROM users WHERE email = ?'), (user['email'],))
+        existing = c.fetchone()
+        if existing:
+            user_map[user['name']] = existing[0]
+            continue
+        user_id = str(uuid.uuid4())
+        c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?)'''),
+                  (user_id, user['email'], user['name'], '123456', 'user', datetime.now().isoformat()))
+        user_map[user['name']] = user_id
+    
+    room_map = {
+        'C01-4F Mickey': 'c01-mickey',
+        'C01-4F Donald': 'c01-donald',
+        'C01-4F Pluto': 'c01-pluto',
+        'C01-4F Dumbo': 'c01-dumbo',
+        'C01-4F Pinocchio': 'c01-pinocchio',
+        'C01-4F Minnie': 'c01-minnie',
+        'C01-4F Goofy': 'c01-goofy',
+        'C01-4F Bambi': 'c01-bambi',
+        'C01-4F Elsa': 'c01-elsa',
+        'C01-4F Aurora': 'c01-aurora',
+        'C01-4F Ariel': 'c01-ariel',
+        'C02-4F Magic': 'c02-magic',
+        'C02-4F Cavaliers': 'c02-cavaliers',
+        'C02-4F Clippers': 'c02-clippers',
+        'C02-4F Celtics': 'c02-celtics',
+        'C02-4F Knicks': 'c02-knicks',
+        'C02-4F Lakers': 'c02-lakers',
+        'C02-4F Bulls': 'c02-bulls',
+        'C02-4F Rockets': 'c02-rockets',
+    }
+    
+    bookings_data = [
+        {'room': 'C01-4F Dumbo', 'title': 'SQE QA Morning Sync w/PQM', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Bay'},
+        {'room': 'C01-4F Minnie', 'title': 'Others Tritium-B daily sync up with F1', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Ray'},
+        {'room': 'C01-4F Bambi', 'title': 'Others RIM DVT & OVB sync up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Kitsa'},
+        {'room': 'C01-4F Elsa', 'title': 'EPM Others Daily Input Outline Meeting', 'start_date': '2026-07-06', 'end_date': '2026-08-01', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Chester'},
+        {'room': 'C01-4F Aurora', 'title': 'KPD Tritium-A Morning Sync with CPT', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Fan Xie'},
+        {'room': 'C01-4F Ariel', 'title': 'Others F1 Arc daily Sync with CPT', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Kitsa'},
+        {'room': 'C02-4F Clippers', 'title': 'AAE Morning sync up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Brynn'},
+        {'room': 'C02-4F Lakers', 'title': 'EE Daily Sync meeting', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '10:00-10:30', 'booker': 'EE User'},
+        {'room': 'C02-4F Bulls', 'title': 'KPD Camera pre-Sync with F1', 'start_date': '2026-06-20', 'end_date': '2026-08-19', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Funny Cheng'},
+        {'room': 'C02-4F Rockets', 'title': 'KPD FCAM internal Sync meeting', 'start_date': '2026-07-06', 'end_date': '2026-08-07', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Melody Wei'},
+        {'room': 'C01-4F Mickey', 'title': 'RF Daily Morning Sync', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Amber'},
+        {'room': 'C01-4F Pinocchio', 'title': 'KPD Acoustic Sync daily Meeting with CPTN', 'start_date': '2026-06-08', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Gary'},
+        {'room': 'C01-4F Goofy', 'title': 'Others RIM FA IT cross function meeting', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Brynn'},
+        {'room': 'C02-4F Cavaliers', 'title': 'Mistral FATP EPM Sync up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Rachel'},
+        {'room': 'C02-4F Lakers', 'title': 'PD Flex Bending Daily meeting W/ TPM Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Patty'},
+        {'room': 'C02-4F Thunder', 'title': 'Others RIM Daily Sync up with AME Others', 'start_date': '2026-06-25', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Kitsa'},
+        {'room': 'C01-4F Dumbo', 'title': 'IT DOE Daily meeting Others', 'start_date': '2026-06-25', 'end_date': '2026-07-31', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Ella'},
+        {'room': 'C01-4F Minnie', 'title': 'Others RIM FA Meeting Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Brynn'},
+        {'room': 'C01-4F Bambi', 'title': 'EERF Sync Meeting', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Amber'},
+        {'room': 'C01-4F Aurora', 'title': 'AAE Zac with VM8, DFM report, ZAC with PD function Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Zac'},
+        {'room': 'C02-4F Clippers', 'title': 'EPM Rachel Input Online Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Rachel'},
+        {'room': 'C01-4F Goofy', 'title': 'AAE JMP boxplot Meeting Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '11:00-11:30', 'end_slot': '11:00-11:30', 'booker': 'Brynn'},
+        {'room': 'C01-4F Pluto', 'title': 'Others Mistral DFM Sync up & Wrap up & TPM daily work', 'start_date': '2026-06-01', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Govinda'},
+        {'room': 'C01-4F Minnie', 'title': 'AAE ZAC/ASF cross function Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Brynn'},
+        {'room': 'C01-4F Elsa', 'title': 'HWTE War Room', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rose Wang'},
+        {'room': 'C01-4F Aurora', 'title': 'AAE Zac with VM8, DFM report, ZAC with PD Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Zac'},
+        {'room': 'C02-4F Magic', 'title': 'Mistral FATP EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rachel'},
+        {'room': 'C02-4F Clippers', 'title': 'DOE Meeting Tue & Friday', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Ella'},
+        {'room': 'C02-4F Lakers', 'title': 'PCC System Sync up Meeting', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Patty'},
+        {'room': 'C02-4F Thunder', 'title': 'EPM War Room', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rachel'},
+        {'room': 'C01-4F Mickey', 'title': 'RF Daily FA', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Amber'},
+        {'room': 'C01-4F Donald', 'title': 'Mistral MLB EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
+        {'room': 'C02-4F Clippers', 'title': 'EPM War Room', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
+        {'room': 'C02-4F Celtics', 'title': 'EPM War Room', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
+        {'room': 'C02-4F Knicks', 'title': 'AAE War Room', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Brynn'},
+        {'room': 'C01-4F Pluto', 'title': 'SQE QA pre Sync w/PQM', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Bay'},
+        {'room': 'C01-4F Goofy', 'title': 'EERF Sync Meeting', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Amber'},
+        {'room': 'C01-4F Aurora', 'title': 'Others Tritium-A Wrap up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Kitsa'},
+        {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Rachel'},
+        {'room': 'C02-4F Lakers', 'title': 'AAE Morning Wrap up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Brynn'},
+        {'room': 'C02-4F Rockets', 'title': 'SQE QA pre Sync w/PQM', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Bay'},
+        {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM Wrap up', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '17:00-17:30', 'end_slot': '17:00-17:30', 'booker': 'Rachel'},
+        {'room': 'C01-4F Mickey', 'title': 'Others RIM DVT & OVB', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '17:30-18:00', 'end_slot': '17:30-18:00', 'booker': 'Kitsa'},
+        {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '19:00-19:30', 'end_slot': '19:00-19:30', 'booker': 'Rachel'},
+    ]
+    
+    count = 0
+    for booking in bookings_data:
+        room_id = room_map.get(booking['room'])
+        user_id = user_map.get(booking['booker'])
+        
+        if not room_id or not user_id:
+            continue
+        
+        booking_id = str(uuid.uuid4())
+        c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
+                     start_slot, end_slot, note, status, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
+                  (booking_id, room_id, user_id, booking['title'], booking['start_date'], booking['end_date'],
+                   booking['start_slot'], booking['end_slot'], '', 'approved', datetime.now().isoformat()))
+        count += 1
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
+
 @app.route('/api/builds', methods=['GET'])
 def get_builds():
     conn = get_db()

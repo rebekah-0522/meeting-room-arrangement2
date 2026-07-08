@@ -962,6 +962,31 @@
       e.target.value = '';
     });
 
+    const $importDefaultBtn = $('#importDefaultBtn');
+    if ($importDefaultBtn) $importDefaultBtn.addEventListener('click', async () => {
+      showModal('Confirm Import', '<p>Are you sure you want to import all default bookings? This will create 44 bookings.</p>', [
+        { text: 'Cancel', class: 'btn-secondary' },
+        { text: 'Confirm', class: 'btn-primary', onClick: async () => {
+          try {
+            const result = await apiRequest('/bookings/import', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({})
+            });
+            if (result.success) {
+              showToast('Success', result.message, 'success');
+              renderAdmin();
+            } else {
+              showToast('Error', result.message || 'Import failed', 'danger');
+            }
+          } catch (err) {
+            console.error('Import error:', err);
+            showToast('Error', 'Unable to connect to server', 'danger');
+          }
+        }}
+      ]);
+    });
+
     const $exportLogsBtn = $('#exportLogsBtn');
     if ($exportLogsBtn) $exportLogsBtn.addEventListener('click', exportLogs);
     const $resetDataBtn = $('#resetDataBtn');
