@@ -93,7 +93,7 @@
                   });
                   if (updateResult.success) {
                     showToast('Success', 'Password updated successfully', 'success');
-                    enterApp();
+                    await enterApp();
                   } else {
                     showToast('Error', updateResult.message || 'Failed to update password', 'danger');
                   }
@@ -104,7 +104,7 @@
               }
             }]);
           } else {
-            enterApp();
+            await enterApp();
           }
         } else {
           showToast('Login Failed', result.message || 'Unknown error', 'danger');
@@ -273,7 +273,7 @@
     }
   }
 
-  function enterApp() {
+  async function enterApp() {
     const user = getCurrentUser();
     $('#loginPage').classList.add('hidden');
     $('#mainNav').style.display = '';
@@ -282,6 +282,35 @@
     if (isEPM(user)) {
       $('#adminTab').classList.remove('hidden');
     }
+    
+    try {
+      const bookingsResult = await apiRequest('/bookings');
+      if (bookingsResult && Array.isArray(bookingsResult)) {
+        appState.bookings = bookingsResult.map(b => ({
+          id: b.id,
+          roomId: b.room_id,
+          userId: b.user_id,
+          title: b.title,
+          bookerName: b.booker_name,
+          bookerEmail: b.booker_email || '',
+          startDate: b.start_date,
+          endDate: b.end_date,
+          startSlot: b.start_slot,
+          endSlot: b.end_slot,
+          contactPhone: b.contact_phone || '',
+          note: b.note || '',
+          status: b.status,
+          createdAt: b.created_at,
+          approvedAt: b.approved_at,
+          cancelledAt: b.cancelled_at
+        }));
+        saveState(appState);
+        console.log('Loaded', appState.bookings.length, 'bookings from server');
+      }
+    } catch (err) {
+      console.error('Failed to load bookings from server:', err);
+    }
+    
     updateNotifBadge();
     navigate('home');
   }
@@ -1008,11 +1037,11 @@
     });
   }
 
-  function init() {
+  async function init() {
     initLogin();
     bindEvents();
     if (getCurrentUser()) {
-      enterApp();
+      await enterApp();
     }
   }
 

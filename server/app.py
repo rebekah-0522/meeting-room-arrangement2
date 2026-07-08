@@ -495,7 +495,7 @@ def get_bookings():
     conn = get_db()
     c = conn.cursor()
     
-    query = 'SELECT b.*, u.name as booker_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE 1=1'
+    query = 'SELECT b.*, u.name as booker_name, u.email as booker_email FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE 1=1'
     params = []
     
     if user_id:
