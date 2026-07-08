@@ -748,9 +748,8 @@ def cancel_booking(booking_id):
 
 @app.route('/api/bookings/import', methods=['POST'])
 def import_bookings_api():
-    try:
-        conn = get_db()
-        c = conn.cursor()
+    conn = get_db()
+    c = conn.cursor()
     
     users_data = [
         {'email': 'bay@example.com', 'name': 'Bay'},
@@ -870,14 +869,10 @@ def import_bookings_api():
                    booking['start_slot'], booking['end_slot'], '', 'approved', datetime.now().isoformat()))
         count += 1
     
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
-    except Exception as e:
-        print('[ERROR] Import error:', str(e))
-        traceback.print_exc()
-        return jsonify({'success': False, 'message': str(e)})
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
 
 @app.route('/api/builds', methods=['GET'])
 def get_builds():
