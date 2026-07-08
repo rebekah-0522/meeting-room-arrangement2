@@ -110,9 +110,20 @@ def init_db():
         print('[DEBUG] Creating bookings table...')
         c.execute('''CREATE TABLE IF NOT EXISTS bookings
                      (id TEXT PRIMARY KEY, room_id TEXT, user_id TEXT, title TEXT,
+                      contact_name TEXT, contact_phone TEXT,
                       start_date TEXT, end_date TEXT, start_slot TEXT, end_slot TEXT,
                       note TEXT, status TEXT DEFAULT 'pending', created_at TEXT,
                       approved_at TEXT, cancelled_at TEXT)''')
+        
+        print('[DEBUG] Adding missing columns to bookings table...')
+        try:
+            c.execute('ALTER TABLE bookings ADD COLUMN contact_name TEXT')
+        except:
+            pass
+        try:
+            c.execute('ALTER TABLE bookings ADD COLUMN contact_phone TEXT')
+        except:
+            pass
         
         print('[DEBUG] Creating builds table...')
         c.execute('''CREATE TABLE IF NOT EXISTS builds
