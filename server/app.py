@@ -746,6 +746,24 @@ def cancel_booking(booking_id):
     
     return jsonify({'success': True, 'message': 'Booking cancelled successfully'})
 
+@app.route('/api/db/migrate', methods=['POST'])
+def migrate_db():
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute('ALTER TABLE bookings ADD COLUMN contact_name TEXT')
+        print('[DEBUG] Added contact_name column')
+    except:
+        pass
+    try:
+        c.execute('ALTER TABLE bookings ADD COLUMN contact_phone TEXT')
+        print('[DEBUG] Added contact_phone column')
+    except:
+        pass
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'message': 'Database migration completed'})
+
 @app.route('/api/bookings/import', methods=['POST'])
 def import_bookings_api():
     conn = get_db()
