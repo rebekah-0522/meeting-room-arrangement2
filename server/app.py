@@ -226,6 +226,12 @@ except Exception as e:
     print('[ERROR] Application initialization failed:', str(e))
     traceback.print_exc()
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print('[ERROR] Unhandled exception:', str(e))
+    traceback.print_exc()
+    return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/reset-admin', methods=['POST'])
 def reset_admin():
     conn = get_db()
@@ -898,7 +904,7 @@ def import_bookings_api():
         booking_id = str(uuid.uuid4())
         c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, contact_name, start_date, end_date, 
                      start_slot, end_slot, note, status, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
                   (booking_id, room_id, user_id, booking['type'], booking['dept'], booking['start_date'], booking['end_date'],
                    booking['start_slot'], booking['end_slot'], '', 'approved', datetime.now().isoformat()))
         count += 1
