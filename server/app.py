@@ -935,7 +935,6 @@ def generate_qrcode():
 
 if __name__ == '__main__':
     try:
-        # Use PORT environment variable (Railway sets this) or default to 5000
         port = int(os.environ.get('PORT', 5000))
         print('[DEBUG] Starting Flask server...')
         print(f'[DEBUG] Host: 0.0.0.0')
@@ -945,4 +944,4 @@ if __name__ == '__main__':
     except Exception as e:
         print('[ERROR] Flask server failed to start:', str(e))
         traceback.print_exc()
-        input('Press Enter to exit...')
+        sys.exit(1)
