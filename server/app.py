@@ -914,6 +914,37 @@ def import_bookings_api():
     
     return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
 
+@app.route('/api/bookings/import/undo', methods=['POST'])
+def undo_import_bookings():
+    conn = get_db()
+    c = get_cursor(conn)
+    
+    import_user_emails = [
+        'bay@example.com', 'ray@example.com', 'kitsa@example.com', 'chester@example.com',
+        'fanxie@example.com', 'brynn@example.com', 'amber@example.com', 'gary@example.com',
+        'ella@example.com', 'govinda@example.com', 'rose@example.com', 'funnycheng@example.com',
+        'melody@example.com', 'patty@example.com', 'zac@example.com', 'rachel@example.com',
+        'ee_user@example.com'
+    ]
+    
+    placeholders = ','.join('?' * len(import_user_emails))
+    c.execute(ph('SELECT id FROM users WHERE email IN ({})'.format(placeholders)), import_user_emails)
+    user_ids = [row[0] for row in c.fetchall()]
+    
+    deleted_count = 0
+    if user_ids:
+        user_placeholders = ','.join('?' * len(user_ids))
+        c.execute(ph('DELETE FROM bookings WHERE user_id IN ({})'.format(user_placeholders)), user_ids)
+        deleted_count = conn.total_changes
+        
+        c.execute(ph('DELETE FROM users WHERE email IN ({})'.format(placeholders)), import_user_emails)
+        
+        conn.commit()
+    
+    conn.close()
+    
+    return jsonify({'success': True, 'message': f'{deleted_count} bookings and related users deleted successfully'})
+
 @app.route('/api/builds', methods=['GET'])
 def get_builds():
     conn = get_db()

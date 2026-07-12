@@ -1037,6 +1037,31 @@
       ]);
     });
 
+    const $undoImportBtn = $('#undoImportBtn');
+    if ($undoImportBtn) $undoImportBtn.addEventListener('click', async () => {
+      showModal('Confirm Undo Import', '<p>Are you sure you want to undo the import? This will delete all imported bookings and users.</p>', [
+        { text: 'Cancel', class: 'btn-secondary' },
+        { text: 'Confirm', class: 'btn-danger', onClick: async () => {
+          try {
+            const result = await apiRequest('/bookings/import/undo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({})
+            });
+            if (result.success) {
+              showToast('Success', result.message, 'success');
+              renderAdmin();
+            } else {
+              showToast('Error', result.message || 'Undo failed', 'danger');
+            }
+          } catch (err) {
+            console.error('Undo import error:', err);
+            showToast('Error', 'Unable to connect to server', 'danger');
+          }
+        }}
+      ]);
+    });
+
     const $exportLogsBtn = $('#exportLogsBtn');
     if ($exportLogsBtn) $exportLogsBtn.addEventListener('click', exportLogs);
     const $resetDataBtn = $('#resetDataBtn');
