@@ -34,17 +34,7 @@ app = Flask(__name__,
             static_folder=PROJECT_ROOT, 
             static_url_path='',
             template_folder=PROJECT_ROOT)
-CORS(app, origins=['*'], supports_credentials=True)
-
-@app.after_request
-def add_headers(response):
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    return response
+CORS(app)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DATABASE = os.path.join(BASE_DIR, 'meeting_room.db')
@@ -235,10 +225,6 @@ try:
 except Exception as e:
     print('[ERROR] Application initialization failed:', str(e))
     traceback.print_exc()
-
-@app.route('/health')
-def health_check():
-    return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
 
 @app.errorhandler(Exception)
 def handle_exception(e):
