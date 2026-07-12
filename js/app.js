@@ -448,8 +448,10 @@
         rooms.forEach(room => {
           const { status, booking } = getSlotStatus(room.id, date, slot);
           const cls = status === 'free' ? 'free' : status;
-          html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}">`;
-          if (booking) html += `<span class="cell-title">●</span>`;
+          const dept = booking?.contactName || booking?.bookerName || 'Unknown';
+          const title = booking ? `${dept}: ${booking.title}` : '';
+          html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}" title="${title}">`;
+          if (booking) html += `<span class="cell-title">${dept}</span>`;
           html += '</td>';
         });
       });
