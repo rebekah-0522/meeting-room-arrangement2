@@ -76,7 +76,9 @@ def ph(sql):
 def get_db():
     if DATABASE_URL:
         import psycopg2
+        from psycopg2 import extras
         conn = psycopg2.connect(DATABASE_URL)
+        conn.cursor_factory = extras.DictCursor
         return conn
     else:
         conn = sqlite3.connect(DATABASE)
