@@ -93,7 +93,7 @@
                   });
                   if (updateResult.success) {
                     showToast('Success', 'Password updated successfully', 'success');
-                    await enterApp();
+                    enterApp();
                   } else {
                     showToast('Error', updateResult.message || 'Failed to update password', 'danger');
                   }
@@ -104,7 +104,7 @@
               }
             }]);
           } else {
-            await enterApp();
+            enterApp();
           }
         } else {
           showToast('Login Failed', result.message || 'Unknown error', 'danger');
@@ -273,7 +273,7 @@
     }
   }
 
-  async function enterApp() {
+  function enterApp() {
     const user = getCurrentUser();
     $('#loginPage').classList.add('hidden');
     $('#mainNav').style.display = '';
@@ -282,36 +282,6 @@
     if (isEPM(user)) {
       $('#adminTab').classList.remove('hidden');
     }
-    
-    try {
-      const bookingsResult = await apiRequest('/bookings');
-      if (bookingsResult && Array.isArray(bookingsResult)) {
-        appState.bookings = bookingsResult.map(b => ({
-          id: b.id,
-          roomId: b.room_id,
-          userId: b.user_id,
-          title: b.title,
-          bookerName: b.booker_name,
-          bookerEmail: b.booker_email || '',
-          contactName: b.contact_name || b.booker_name || '',
-          startDate: b.start_date,
-          endDate: b.end_date,
-          startSlot: b.start_slot,
-          endSlot: b.end_slot,
-          contactPhone: b.contact_phone || '',
-          note: b.note || '',
-          status: b.status,
-          createdAt: b.created_at,
-          approvedAt: b.approved_at,
-          cancelledAt: b.cancelled_at
-        }));
-        saveState(appState);
-        console.log('Loaded', appState.bookings.length, 'bookings from server');
-      }
-    } catch (err) {
-      console.error('Failed to load bookings from server:', err);
-    }
-    
     updateNotifBadge();
     navigate('home');
   }
@@ -379,28 +349,17 @@
     if (!$roomSelect) return;
     
     const rooms = filteredRooms(building);
-    const mode = $('#viewMode')?.value;
-    let html = mode === 'day' ? '' : '<option value="all">All</option>';
+    let html = '<option value="all">All</option>';
     rooms.forEach(r => {
       const suffix = r.hasWebex ? ' ★Webex' : '';
       html += `<option value="${r.id}">${r.name} (${r.capacity} people)${suffix}</option>`;
     });
     $roomSelect.innerHTML = html;
-    
-    if (mode === 'day' && ($roomSelect.value === 'all' || !$roomSelect.value) && rooms.length > 0) {
-      $roomSelect.value = rooms[0].id;
-    }
   }
 
   function renderDayView(container, date, building, room) {
     const rooms = filteredRooms(building, room);
-    const selectedRoom = rooms[0];
-    const roomTitle = selectedRoom ? `${selectedRoom.building}-${selectedRoom.floor} ${selectedRoom.name} (${selectedRoom.capacity} people)${selectedRoom.hasWebex ? ' ★Webex' : ''}${selectedRoom.hasProjector ? ' ◆Projector' : ''}` : '';
-    let html = `<div class="schedule-wrap">`;
-    if (roomTitle) {
-      html += `<h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#333">${roomTitle}</h3>`;
-    }
-    html += `<table class="schedule-table"><thead><tr>
+    let html = `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
       <th class="time-col">Time Slot</th>`;
     rooms.forEach(room => {
       html += `<th class="room-col" style="${room.hasWebex ? 'color:var(--webex);font-weight:600' : 'color:#333'}">${room.name}</th>`;
@@ -412,10 +371,9 @@
       rooms.forEach(room => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         const cls = status === 'free' ? 'free' : status;
-        const dept = booking?.contactName || booking?.bookerName || 'Unknown';
-        const title = booking ? `${dept}: ${booking.title}` : '';
+        const title = booking ? `${booking.bookerName}: ${booking.title}` : '';
         html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}" title="${title}">`;
-        if (booking) html += `<span class="cell-title">${dept}</span>`;
+        if (booking) html += `<span class="cell-title">${booking.bookerName?.split(' ')[0] || 'Booked'}</span>`;
         html += '</td>';
       });
       html += '</tr>';
@@ -448,10 +406,8 @@
         rooms.forEach(room => {
           const { status, booking } = getSlotStatus(room.id, date, slot);
           const cls = status === 'free' ? 'free' : status;
-          const dept = booking?.contactName || booking?.bookerName || 'Unknown';
-          const title = booking ? `${dept}: ${booking.title}` : '';
-          html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}" title="${title}">`;
-          if (booking) html += `<span class="cell-title">${dept}</span>`;
+          html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}">`;
+          if (booking) html += `<span class="cell-title">●</span>`;
           html += '</td>';
         });
       });
@@ -518,8 +474,7 @@
           showModal('预约详情', `
             <p><strong>${booking.title}</strong></p>
             <p>会议室：${formatRoomLabel(roomObj)}</p>
-            <p>部门：${booking.contactName || booking.bookerName}</p>
-            <p>会议类型：${booking.title}</p>
+            <p>预约人：${booking.bookerName} (${booking.bookerEmail})</p>
             <p>日期：${booking.startDate} ~ ${booking.endDate}</p>
             <p>时段：${booking.startSlot} - ${booking.endSlot}</p>
             <p>状态：<span class="status-pill ${booking.status}">${statusLabel(booking.status)}</span></p>
@@ -932,12 +887,7 @@
     if ($filterWebex) $filterWebex.addEventListener('change', renderRoomList);
 
     const $viewMode = $('#viewMode');
-    if ($viewMode) $viewMode.addEventListener('change', () => {
-      if ($viewMode.value === 'day') {
-        updateScheduleRoomOptions();
-      }
-      renderSchedule();
-    });
+    if ($viewMode) $viewMode.addEventListener('change', renderSchedule);
     const $scheduleDate = $('#scheduleDate');
     if ($scheduleDate) {
       $scheduleDate.addEventListener('change', renderSchedule);
@@ -1012,56 +962,6 @@
       e.target.value = '';
     });
 
-    const $importDefaultBtn = $('#importDefaultBtn');
-    if ($importDefaultBtn) $importDefaultBtn.addEventListener('click', async () => {
-      showModal('Confirm Import', '<p>Are you sure you want to import all default bookings? This will create 44 bookings.</p>', [
-        { text: 'Cancel', class: 'btn-secondary' },
-        { text: 'Confirm', class: 'btn-primary', onClick: async () => {
-          try {
-            const result = await apiRequest('/bookings/import', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({})
-            });
-            if (result.success) {
-              showToast('Success', result.message, 'success');
-              renderAdmin();
-            } else {
-              showToast('Error', result.message || 'Import failed', 'danger');
-            }
-          } catch (err) {
-            console.error('Import error:', err);
-            showToast('Error', 'Unable to connect to server', 'danger');
-          }
-        }}
-      ]);
-    });
-
-    const $undoImportBtn = $('#undoImportBtn');
-    if ($undoImportBtn) $undoImportBtn.addEventListener('click', async () => {
-      showModal('Confirm Undo Import', '<p>Are you sure you want to undo the import? This will delete all imported bookings and users.</p>', [
-        { text: 'Cancel', class: 'btn-secondary' },
-        { text: 'Confirm', class: 'btn-danger', onClick: async () => {
-          try {
-            const result = await apiRequest('/bookings/import/undo', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({})
-            });
-            if (result.success) {
-              showToast('Success', result.message, 'success');
-              renderAdmin();
-            } else {
-              showToast('Error', result.message || 'Undo failed', 'danger');
-            }
-          } catch (err) {
-            console.error('Undo import error:', err);
-            showToast('Error', 'Unable to connect to server', 'danger');
-          }
-        }}
-      ]);
-    });
-
     const $exportLogsBtn = $('#exportLogsBtn');
     if ($exportLogsBtn) $exportLogsBtn.addEventListener('click', exportLogs);
     const $resetDataBtn = $('#resetDataBtn');
@@ -1083,11 +983,11 @@
     });
   }
 
-  async function init() {
+  function init() {
     initLogin();
     bindEvents();
     if (getCurrentUser()) {
-      await enterApp();
+      enterApp();
     }
   }
 

@@ -83,12 +83,6 @@ def get_db():
         conn.row_factory = sqlite3.Row
         return conn
 
-def get_cursor(conn):
-    c = conn.cursor()
-    if DATABASE_URL:
-        c.row_factory = lambda cursor, row: dict(zip([desc[0] for desc in cursor.description], row))
-    return c
-
 def init_db():
     try:
         print('[DEBUG] Initializing database...')
@@ -116,20 +110,9 @@ def init_db():
         print('[DEBUG] Creating bookings table...')
         c.execute('''CREATE TABLE IF NOT EXISTS bookings
                      (id TEXT PRIMARY KEY, room_id TEXT, user_id TEXT, title TEXT,
-                      contact_name TEXT, contact_phone TEXT,
                       start_date TEXT, end_date TEXT, start_slot TEXT, end_slot TEXT,
                       note TEXT, status TEXT DEFAULT 'pending', created_at TEXT,
                       approved_at TEXT, cancelled_at TEXT)''')
-        
-        print('[DEBUG] Adding missing columns to bookings table...')
-        try:
-            c.execute('ALTER TABLE bookings ADD COLUMN contact_name TEXT')
-        except:
-            pass
-        try:
-            c.execute('ALTER TABLE bookings ADD COLUMN contact_phone TEXT')
-        except:
-            pass
         
         print('[DEBUG] Creating builds table...')
         c.execute('''CREATE TABLE IF NOT EXISTS builds
@@ -225,28 +208,6 @@ try:
 except Exception as e:
     print('[ERROR] Application initialization failed:', str(e))
     traceback.print_exc()
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    print('[ERROR] Unhandled exception:', str(e))
-    traceback.print_exc()
-    return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/reset-admin', methods=['POST'])
-def reset_admin():
-    conn = get_db()
-    c = get_cursor(conn)
-    
-    email = 'rebekah.xy.he@mail.foxconn.com'
-    default_password = '123456'
-    hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    
-    c.execute(ph('UPDATE users SET password = ?, force_change_password = 1 WHERE email = ?'), 
-              (hashed_password, email))
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'success': True, 'message': 'Admin password reset successfully. Default password is 123456'})
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -534,7 +495,7 @@ def get_bookings():
     conn = get_db()
     c = conn.cursor()
     
-    query = 'SELECT b.*, u.name as booker_name, u.email as booker_email FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE 1=1'
+    query = 'SELECT b.*, u.name as booker_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE 1=1'
     params = []
     
     if user_id:
@@ -767,183 +728,6 @@ def cancel_booking(booking_id):
     conn.close()
     
     return jsonify({'success': True, 'message': 'Booking cancelled successfully'})
-
-@app.route('/api/db/migrate', methods=['POST'])
-def migrate_db():
-    conn = get_db()
-    c = conn.cursor()
-    try:
-        c.execute('ALTER TABLE bookings ADD COLUMN contact_name TEXT')
-        print('[DEBUG] Added contact_name column')
-    except:
-        pass
-    try:
-        c.execute('ALTER TABLE bookings ADD COLUMN contact_phone TEXT')
-        print('[DEBUG] Added contact_phone column')
-    except:
-        pass
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True, 'message': 'Database migration completed'})
-
-@app.route('/api/bookings/import', methods=['POST'])
-def import_bookings_api():
-    conn = get_db()
-    c = get_cursor(conn)
-    
-    users_data = [
-        {'email': 'bay@example.com', 'name': 'Bay'},
-        {'email': 'ray@example.com', 'name': 'Ray'},
-        {'email': 'kitsa@example.com', 'name': 'Kitsa'},
-        {'email': 'chester@example.com', 'name': 'Chester'},
-        {'email': 'fanxie@example.com', 'name': 'Fan Xie'},
-        {'email': 'brynn@example.com', 'name': 'Brynn'},
-        {'email': 'amber@example.com', 'name': 'Amber'},
-        {'email': 'gary@example.com', 'name': 'Gary'},
-        {'email': 'ella@example.com', 'name': 'Ella'},
-        {'email': 'govinda@example.com', 'name': 'Govinda'},
-        {'email': 'rose@example.com', 'name': 'Rose Wang'},
-        {'email': 'funnycheng@example.com', 'name': 'Funny Cheng'},
-        {'email': 'melody@example.com', 'name': 'Melody Wei'},
-        {'email': 'patty@example.com', 'name': 'Patty'},
-        {'email': 'zac@example.com', 'name': 'Zac'},
-        {'email': 'rachel@example.com', 'name': 'Rachel'},
-        {'email': 'ee_user@example.com', 'name': 'EE User'},
-    ]
-    
-    user_map = {}
-    for user in users_data:
-        c.execute(ph('SELECT id FROM users WHERE email = ?'), (user['email'],))
-        existing = c.fetchone()
-        if existing:
-            user_map[user['name']] = existing[0]
-            continue
-        user_id = str(uuid.uuid4())
-        c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?)'''),
-                  (user_id, user['email'], user['name'], '123456', 'user', datetime.now().isoformat()))
-        user_map[user['name']] = user_id
-    
-    room_map = {
-        'C01-4F Mickey': 'c01-mickey',
-        'C01-4F Donald': 'c01-donald',
-        'C01-4F Pluto': 'c01-pluto',
-        'C01-4F Dumbo': 'c01-dumbo',
-        'C01-4F Pinocchio': 'c01-pinocchio',
-        'C01-4F Minnie': 'c01-minnie',
-        'C01-4F Goofy': 'c01-goofy',
-        'C01-4F Bambi': 'c01-bambi',
-        'C01-4F Elsa': 'c01-elsa',
-        'C01-4F Aurora': 'c01-aurora',
-        'C01-4F Ariel': 'c01-ariel',
-        'C02-4F Magic': 'c02-magic',
-        'C02-4F Cavaliers': 'c02-cavaliers',
-        'C02-4F Clippers': 'c02-clippers',
-        'C02-4F Celtics': 'c02-celtics',
-        'C02-4F Knicks': 'c02-knicks',
-        'C02-4F Lakers': 'c02-lakers',
-        'C02-4F Bulls': 'c02-bulls',
-        'C02-4F Rockets': 'c02-rockets',
-    }
-    
-    bookings_data = [
-        {'room': 'C01-4F Dumbo', 'type': 'SQE QA Morning Sync w/PQM', 'dept': 'SQE', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Bay'},
-        {'room': 'C01-4F Minnie', 'type': 'Others Tritium-B daily sync up with F1', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Ray'},
-        {'room': 'C01-4F Bambi', 'type': 'Others RIM DVT & OVB sync up', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Kitsa'},
-        {'room': 'C01-4F Elsa', 'type': 'EPM Others Daily Input Outline Meeting', 'dept': 'EPM', 'start_date': '2026-07-06', 'end_date': '2026-08-01', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Chester'},
-        {'room': 'C01-4F Aurora', 'type': 'KPD Tritium-A Morning Sync with CPT', 'dept': 'KPD', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Fan Xie'},
-        {'room': 'C01-4F Ariel', 'type': 'Others F1 Arc daily Sync with CPT', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Kitsa'},
-        {'room': 'C02-4F Clippers', 'type': 'AAE Morning sync up', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Brynn'},
-        {'room': 'C02-4F Lakers', 'type': 'EE Daily Sync meeting', 'dept': 'EE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:00-09:30', 'end_slot': '10:00-10:30', 'booker': 'EE User'},
-        {'room': 'C02-4F Bulls', 'type': 'KPD Camera pre-Sync with F1', 'dept': 'KPD', 'start_date': '2026-06-20', 'end_date': '2026-08-19', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Funny Cheng'},
-        {'room': 'C02-4F Rockets', 'type': 'KPD FCAM internal Sync meeting', 'dept': 'KPD', 'start_date': '2026-07-06', 'end_date': '2026-08-07', 'start_slot': '09:00-09:30', 'end_slot': '09:00-09:30', 'booker': 'Melody Wei'},
-        {'room': 'C01-4F Mickey', 'type': 'RF Daily Morning Sync', 'dept': 'RF', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Amber'},
-        {'room': 'C01-4F Pinocchio', 'type': 'KPD Acoustic Sync daily Meeting with CPTN', 'dept': 'KPD', 'start_date': '2026-06-08', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Gary'},
-        {'room': 'C01-4F Goofy', 'type': 'Others RIM FA IT cross function meeting', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Brynn'},
-        {'room': 'C02-4F Cavaliers', 'type': 'Mistral FATP EPM Sync up', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Rachel'},
-        {'room': 'C02-4F Lakers', 'type': 'PD Flex Bending Daily meeting W/ TPM Others', 'dept': 'PD', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Patty'},
-        {'room': 'C02-4F Thunder', 'type': 'Others RIM Daily Sync up with AME Others', 'dept': 'Others', 'start_date': '2026-06-25', 'end_date': '2026-08-30', 'start_slot': '09:30-10:00', 'end_slot': '09:30-10:00', 'booker': 'Kitsa'},
-        {'room': 'C01-4F Dumbo', 'type': 'IT DOE Daily meeting Others', 'dept': 'DOE', 'start_date': '2026-06-25', 'end_date': '2026-07-31', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Ella'},
-        {'room': 'C01-4F Minnie', 'type': 'Others RIM FA Meeting Others', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Brynn'},
-        {'room': 'C01-4F Bambi', 'type': 'EERF Sync Meeting', 'dept': 'EERF', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Amber'},
-        {'room': 'C01-4F Aurora', 'type': 'AAE Zac with VM8, DFM report, ZAC with PD function Others', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Zac'},
-        {'room': 'C02-4F Clippers', 'type': 'EPM Rachel Input Online Others', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '10:00-10:30', 'end_slot': '10:00-10:30', 'booker': 'Rachel'},
-        {'room': 'C01-4F Goofy', 'type': 'AAE JMP boxplot Meeting Others', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '11:00-11:30', 'end_slot': '11:00-11:30', 'booker': 'Brynn'},
-        {'room': 'C01-4F Pluto', 'type': 'Others Mistral DFM Sync up & Wrap up & TPM daily work', 'dept': 'Others', 'start_date': '2026-06-01', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Govinda'},
-        {'room': 'C01-4F Minnie', 'type': 'AAE ZAC/ASF cross function Others', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Brynn'},
-        {'room': 'C01-4F Elsa', 'type': 'HWTE War Room', 'dept': 'HWTE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rose Wang'},
-        {'room': 'C01-4F Aurora', 'type': 'AAE Zac with VM8, DFM report, ZAC with PD Others', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Zac'},
-        {'room': 'C02-4F Magic', 'type': 'Mistral FATP EPM', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rachel'},
-        {'room': 'C02-4F Clippers', 'type': 'DOE Meeting Tue & Friday', 'dept': 'DOE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Ella'},
-        {'room': 'C02-4F Lakers', 'type': 'PCC System Sync up Meeting', 'dept': 'PCC', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Patty'},
-        {'room': 'C02-4F Thunder', 'type': 'EPM War Room', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '13:00-13:30', 'end_slot': '13:00-13:30', 'booker': 'Rachel'},
-        {'room': 'C01-4F Mickey', 'type': 'RF Daily FA', 'dept': 'RF', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Amber'},
-        {'room': 'C01-4F Donald', 'type': 'Mistral MLB EPM', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
-        {'room': 'C02-4F Clippers', 'type': 'EPM War Room', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
-        {'room': 'C02-4F Celtics', 'type': 'EPM War Room', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Rachel'},
-        {'room': 'C02-4F Knicks', 'type': 'AAE War Room', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '14:00-14:30', 'end_slot': '14:00-14:30', 'booker': 'Brynn'},
-        {'room': 'C01-4F Pluto', 'type': 'SQE QA pre Sync w/PQM', 'dept': 'SQE', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Bay'},
-        {'room': 'C01-4F Goofy', 'type': 'EERF Sync Meeting', 'dept': 'EERF', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Amber'},
-        {'room': 'C01-4F Aurora', 'type': 'Others Tritium-A Wrap up', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Kitsa'},
-        {'room': 'C02-4F Clippers', 'type': 'Mistral FATP EPM', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Rachel'},
-        {'room': 'C02-4F Lakers', 'type': 'AAE Morning Wrap up', 'dept': 'AAE', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Brynn'},
-        {'room': 'C02-4F Rockets', 'type': 'SQE QA pre Sync w/PQM', 'dept': 'SQE', 'start_date': '2026-06-25', 'end_date': '2026-08-01', 'start_slot': '16:30-17:00', 'end_slot': '16:30-17:00', 'booker': 'Bay'},
-        {'room': 'C02-4F Clippers', 'type': 'Mistral FATP EPM Wrap up', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '17:00-17:30', 'end_slot': '17:00-17:30', 'booker': 'Rachel'},
-        {'room': 'C01-4F Mickey', 'type': 'Others RIM DVT & OVB', 'dept': 'Others', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '17:30-18:00', 'end_slot': '17:30-18:00', 'booker': 'Kitsa'},
-        {'room': 'C02-4F Clippers', 'type': 'Mistral FATP EPM', 'dept': 'EPM', 'start_date': '2026-06-22', 'end_date': '2026-08-30', 'start_slot': '19:00-19:30', 'end_slot': '19:00-19:30', 'booker': 'Rachel'},
-    ]
-    
-    count = 0
-    for booking in bookings_data:
-        room_id = room_map.get(booking['room'])
-        user_id = user_map.get(booking['booker'])
-        
-        if not room_id or not user_id:
-            continue
-        
-        booking_id = str(uuid.uuid4())
-        c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, contact_name, start_date, end_date, 
-                     start_slot, end_slot, note, status, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
-                  (booking_id, room_id, user_id, booking['type'], booking['dept'], booking['start_date'], booking['end_date'],
-                   booking['start_slot'], booking['end_slot'], '', 'approved', datetime.now().isoformat()))
-        count += 1
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'success': True, 'message': f'{count} bookings imported successfully'})
-
-@app.route('/api/bookings/import/undo', methods=['POST'])
-def undo_import_bookings():
-    conn = get_db()
-    c = get_cursor(conn)
-    
-    import_user_emails = [
-        'bay@example.com', 'ray@example.com', 'kitsa@example.com', 'chester@example.com',
-        'fanxie@example.com', 'brynn@example.com', 'amber@example.com', 'gary@example.com',
-        'ella@example.com', 'govinda@example.com', 'rose@example.com', 'funnycheng@example.com',
-        'melody@example.com', 'patty@example.com', 'zac@example.com', 'rachel@example.com',
-        'ee_user@example.com'
-    ]
-    
-    placeholders = ','.join('?' * len(import_user_emails))
-    c.execute(ph('SELECT id FROM users WHERE email IN ({})'.format(placeholders)), import_user_emails)
-    user_ids = [row[0] for row in c.fetchall()]
-    
-    deleted_count = 0
-    if user_ids:
-        user_placeholders = ','.join('?' * len(user_ids))
-        c.execute(ph('DELETE FROM bookings WHERE user_id IN ({})'.format(user_placeholders)), user_ids)
-        deleted_count = conn.total_changes
-        
-        c.execute(ph('DELETE FROM users WHERE email IN ({})'.format(placeholders)), import_user_emails)
-        
-        conn.commit()
-    
-    conn.close()
-    
-    return jsonify({'success': True, 'message': f'{deleted_count} bookings and related users deleted successfully'})
 
 @app.route('/api/builds', methods=['GET'])
 def get_builds():
