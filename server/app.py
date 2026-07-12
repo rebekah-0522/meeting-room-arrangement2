@@ -114,6 +114,18 @@ def init_db():
                       note TEXT, status TEXT DEFAULT 'pending', created_at TEXT,
                       approved_at TEXT, cancelled_at TEXT)''')
         
+        print('[DEBUG] Adding missing columns to bookings table...')
+        try:
+            c.execute('ALTER TABLE bookings ADD COLUMN contact_name TEXT')
+            print('[DEBUG] Added contact_name column')
+        except:
+            print('[DEBUG] contact_name column already exists')
+        try:
+            c.execute('ALTER TABLE bookings ADD COLUMN contact_phone TEXT')
+            print('[DEBUG] Added contact_phone column')
+        except:
+            print('[DEBUG] contact_phone column already exists')
+        
         print('[DEBUG] Creating builds table...')
         c.execute('''CREATE TABLE IF NOT EXISTS builds
                      (id TEXT PRIMARY KEY, name TEXT, start_date TEXT, end_date TEXT,
@@ -610,11 +622,11 @@ def create_booking():
     needs_approval = user['role'] != 'epm' and days > 3
     
     c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
-                 start_slot, end_slot, note, status, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
+                 start_slot, end_slot, note, status, created_at, contact_name, contact_phone)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
               (booking_id, room_id, user_id, title, start_date, end_date,
                start_slot, end_slot, note, 'pending' if needs_approval else 'approved',
-               datetime.now().isoformat()))
+               datetime.now().isoformat(), '', ''))
     
     c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
                  VALUES (?, ?, ?, ?)'''),
