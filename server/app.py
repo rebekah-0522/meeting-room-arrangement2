@@ -226,6 +226,22 @@ except Exception as e:
     print('[ERROR] Application initialization failed:', str(e))
     traceback.print_exc()
 
+@app.route('/api/reset-admin', methods=['POST'])
+def reset_admin():
+    conn = get_db()
+    c = get_cursor(conn)
+    
+    email = 'rebekah.xy.he@mail.foxconn.com'
+    default_password = '123456'
+    hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    c.execute(ph('UPDATE users SET password = ?, force_change_password = 1 WHERE email = ?'), 
+              (hashed_password, email))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Admin password reset successfully. Default password is 123456'})
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
