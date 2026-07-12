@@ -379,17 +379,28 @@
     if (!$roomSelect) return;
     
     const rooms = filteredRooms(building);
-    let html = '<option value="all">All</option>';
+    const mode = $('#viewMode')?.value;
+    let html = mode === 'day' ? '' : '<option value="all">All</option>';
     rooms.forEach(r => {
       const suffix = r.hasWebex ? ' ★Webex' : '';
       html += `<option value="${r.id}">${r.name} (${r.capacity} people)${suffix}</option>`;
     });
     $roomSelect.innerHTML = html;
+    
+    if (mode === 'day' && ($roomSelect.value === 'all' || !$roomSelect.value) && rooms.length > 0) {
+      $roomSelect.value = rooms[0].id;
+    }
   }
 
   function renderDayView(container, date, building, room) {
     const rooms = filteredRooms(building, room);
-    let html = `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
+    const selectedRoom = rooms[0];
+    const roomTitle = selectedRoom ? `${selectedRoom.building}-${selectedRoom.floor} ${selectedRoom.name} (${selectedRoom.capacity} people)${selectedRoom.hasWebex ? ' ★Webex' : ''}${selectedRoom.hasProjector ? ' ◆Projector' : ''}` : '';
+    let html = `<div class="schedule-wrap">`;
+    if (roomTitle) {
+      html += `<h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#333">${roomTitle}</h3>`;
+    }
+    html += `<table class="schedule-table"><thead><tr>
       <th class="time-col">Time Slot</th>`;
     rooms.forEach(room => {
       html += `<th class="room-col" style="${room.hasWebex ? 'color:var(--webex);font-weight:600' : 'color:#333'}">${room.name}</th>`;
@@ -919,7 +930,12 @@
     if ($filterWebex) $filterWebex.addEventListener('change', renderRoomList);
 
     const $viewMode = $('#viewMode');
-    if ($viewMode) $viewMode.addEventListener('change', renderSchedule);
+    if ($viewMode) $viewMode.addEventListener('change', () => {
+      if ($viewMode.value === 'day') {
+        updateScheduleRoomOptions();
+      }
+      renderSchedule();
+    });
     const $scheduleDate = $('#scheduleDate');
     if ($scheduleDate) {
       $scheduleDate.addEventListener('change', renderSchedule);
