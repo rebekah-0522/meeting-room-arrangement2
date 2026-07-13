@@ -962,6 +962,13 @@ def generate_qrcode():
 
 if __name__ == '__main__':
     try:
+        init_db()
+        print('[DEBUG] Application initialization complete')
+    except Exception as e:
+        print('[ERROR] Application initialization failed:', str(e))
+        traceback.print_exc()
+    
+    try:
         port = int(os.environ.get('PORT', 5000))
         print('[DEBUG] Starting Flask server...')
         print(f'[DEBUG] Host: 0.0.0.0')
