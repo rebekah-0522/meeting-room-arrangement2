@@ -3,7 +3,7 @@
     "command": "pip install -r requirements.txt"
   },
   "run": {
-    "command": "gunicorn server.app:app",
+    "command": "gunicorn -b 0.0.0.0:$PORT server.app:app",
     "port": 8080
   }
 }
