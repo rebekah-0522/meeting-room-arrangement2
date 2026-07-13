@@ -1,0 +1,9 @@
+{
+  "build": {
+    "command": "pip install -r requirements.txt"
+  },
+  "run": {
+    "command": "gunicorn server.app:app",
+    "port": 8080
+  }
+}
