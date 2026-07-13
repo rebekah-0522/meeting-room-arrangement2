@@ -917,7 +917,7 @@ def undo_import():
         conn = get_db()
         c = conn.cursor()
         c.execute("DELETE FROM bookings WHERE created_at LIKE '2026-07-08%'")
-        deleted = conn.rowcount
+        deleted = c.rowcount
         c.execute("DELETE FROM users WHERE email LIKE '%@example.com'")
         conn.commit()
         conn.close()
