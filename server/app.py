@@ -899,6 +899,32 @@ def static_files(path):
         return send_from_directory(PROJECT_ROOT, path)
     return jsonify({'error': 'File not found'}), 404
 
+@app.route('/api/bookings/clear', methods=['DELETE'])
+def clear_bookings():
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('DELETE FROM bookings')
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'All bookings cleared successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/bookings/import/undo', methods=['POST'])
+def undo_import():
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("DELETE FROM bookings WHERE created_at LIKE '2026-07-08%'")
+        deleted = conn.rowcount
+        c.execute("DELETE FROM users WHERE email LIKE '%@example.com'")
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': f'Undo completed. Deleted {deleted} bookings.'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/qrcode')
 def generate_qrcode():
     if not QRCODE_AVAILABLE:
