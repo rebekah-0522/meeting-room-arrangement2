@@ -222,13 +222,6 @@ def handle_exception(e):
     traceback.print_exc()
     return jsonify({'success': False, 'message': str(e)}), 500
 
-try:
-    init_db()
-    print('[DEBUG] Application initialization complete')
-except Exception as e:
-    print('[ERROR] Application initialization failed:', str(e))
-    traceback.print_exc()
-
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
