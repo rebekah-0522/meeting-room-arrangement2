@@ -216,6 +216,12 @@ def init_default_data():
         print('[ERROR] Default data initialization failed:', str(e))
         traceback.print_exc()
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print('[ERROR] Exception:', str(e))
+    traceback.print_exc()
+    return jsonify({'success': False, 'message': str(e)}), 500
+
 try:
     init_db()
     print('[DEBUG] Application initialization complete')
