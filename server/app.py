@@ -1031,6 +1031,159 @@ def clear_bookings():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+SAMPLE_USERS = [
+    {'email': 'bay@example.com', 'name': 'Bay', 'phone': '13822443966'},
+    {'email': 'ray@example.com', 'name': 'Ray', 'phone': '506828715'},
+    {'email': 'kitsa@example.com', 'name': 'Kitsa', 'phone': '13165713179'},
+    {'email': 'chester@example.com', 'name': 'Chester', 'phone': '13538007047'},
+    {'email': 'fanxie@example.com', 'name': 'Fan Xie', 'phone': '13549847690'},
+    {'email': 'brynn@example.com', 'name': 'Brynn', 'phone': '777896'},
+    {'email': 'amber@example.com', 'name': 'Amber', 'phone': '29951'},
+    {'email': 'gary@example.com', 'name': 'Gary', 'phone': ''},
+    {'email': 'ella@example.com', 'name': 'Ella', 'phone': '89889'},
+    {'email': 'govinda@example.com', 'name': 'Govinda', 'phone': '568-86500'},
+    {'email': 'rose@example.com', 'name': 'Rose Wang', 'phone': '15807557488'},
+    {'email': 'funnycheng@example.com', 'name': 'Funny Cheng', 'phone': '13640901702'},
+    {'email': 'melody@example.com', 'name': 'Melody Wei', 'phone': '76972'},
+    {'email': 'patty@example.com', 'name': 'Patty', 'phone': '24639'},
+    {'email': 'zac@example.com', 'name': 'Zac', 'phone': '13143656064'},
+    {'email': 'rachel@example.com', 'name': 'Rachel', 'phone': ''},
+    {'email': 'ee_user@example.com', 'name': 'EE User', 'phone': '18576733879'},
+]
+
+SAMPLE_BOOKINGS = [
+    {'room': 'C01-4F Dumbo', 'title': 'SQE QA Morning Sync w/PQM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Bay'},
+    {'room': 'C01-4F Minnie', 'title': 'Others Tritium-B daily sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Ray'},
+    {'room': 'C01-4F Bambi', 'title': 'Others RIM DVT & OVB sync up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Kitsa'},
+    {'room': 'C01-4F Elsa', 'title': 'EPM Others Daily Input Outline', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Chester'},
+    {'room': 'C01-4F Aurora', 'title': 'KPD Tritium-A Morning Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Fan Xie'},
+    {'room': 'C01-4F Ariel', 'title': 'Others F1 Arc daily Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Kitsa'},
+    {'room': 'C02-4F Clippers', 'title': 'AAE Morning sync up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Brynn'},
+    {'room': 'C02-4F Lakers', 'title': 'EE Daily Sync meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '10:30', 'booker': 'EE User'},
+    {'room': 'C02-4F Bulls', 'title': 'KPD Camera pre-Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Funny Cheng'},
+    {'room': 'C02-4F Rockets', 'title': 'KPD FCAM internal Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:00', 'end_slot': '09:30', 'booker': 'Melody Wei'},
+    {'room': 'C01-4F Mickey', 'title': 'RF Daily Morning Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Amber'},
+    {'room': 'C01-4F Pinocchio', 'title': 'KPD Acoustic Sync daily', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Gary'},
+    {'room': 'C01-4F Goofy', 'title': 'Others RIM FA IT meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Brynn'},
+    {'room': 'C02-4F Cavaliers', 'title': 'Mistral FATP EPM Sync up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Rachel'},
+    {'room': 'C02-4F Lakers', 'title': 'PD Flex Bending Daily', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Patty'},
+    {'room': 'C02-4F Thunder', 'title': 'Others RIM Daily Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '09:30', 'end_slot': '10:00', 'booker': 'Kitsa'},
+    {'room': 'C01-4F Dumbo', 'title': 'IT DOE Daily meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '10:00', 'end_slot': '10:30', 'booker': 'Ella'},
+    {'room': 'C01-4F Minnie', 'title': 'Others RIM FA Meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '10:00', 'end_slot': '10:30', 'booker': 'Brynn'},
+    {'room': 'C01-4F Bambi', 'title': 'EERF Sync Meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '10:00', 'end_slot': '10:30', 'booker': 'Amber'},
+    {'room': 'C01-4F Aurora', 'title': 'AAE Zac with VM8', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '10:00', 'end_slot': '10:30', 'booker': 'Zac'},
+    {'room': 'C02-4F Clippers', 'title': 'EPM Rachel Input Online', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '10:00', 'end_slot': '10:30', 'booker': 'Rachel'},
+    {'room': 'C01-4F Goofy', 'title': 'AAE JMP boxplot Meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '11:00', 'end_slot': '11:30', 'booker': 'Brynn'},
+    {'room': 'C01-4F Pluto', 'title': 'Others Mistral DFM Sync', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Govinda'},
+    {'room': 'C01-4F Minnie', 'title': 'AAE ZAC/ASF cross function', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Brynn'},
+    {'room': 'C01-4F Elsa', 'title': 'HWTE War Room', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Rose Wang'},
+    {'room': 'C01-4F Aurora', 'title': 'AAE Zac with VM8 DFM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Zac'},
+    {'room': 'C02-4F Magic', 'title': 'Mistral FATP EPM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Rachel'},
+    {'room': 'C02-4F Clippers', 'title': 'DOE Meeting Tue & Friday', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Ella'},
+    {'room': 'C02-4F Lakers', 'title': 'PCC System Sync up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Patty'},
+    {'room': 'C02-4F Thunder', 'title': 'EPM War Room', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '13:00', 'end_slot': '13:30', 'booker': 'Rachel'},
+    {'room': 'C01-4F Mickey', 'title': 'RF Daily FA', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '14:00', 'end_slot': '14:30', 'booker': 'Amber'},
+    {'room': 'C01-4F Donald', 'title': 'Mistral MLB EPM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '14:00', 'end_slot': '14:30', 'booker': 'Rachel'},
+    {'room': 'C02-4F Clippers', 'title': 'EPM War Room', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '14:00', 'end_slot': '14:30', 'booker': 'Rachel'},
+    {'room': 'C02-4F Celtics', 'title': 'EPM War Room', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '14:00', 'end_slot': '14:30', 'booker': 'Rachel'},
+    {'room': 'C02-4F Knicks', 'title': 'AAE War Room', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '14:00', 'end_slot': '14:30', 'booker': 'Brynn'},
+    {'room': 'C01-4F Pluto', 'title': 'SQE QA pre Sync w/PQM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Bay'},
+    {'room': 'C01-4F Goofy', 'title': 'EERF Sync Meeting', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Amber'},
+    {'room': 'C01-4F Aurora', 'title': 'Others Tritium-A Wrap up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Kitsa'},
+    {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Rachel'},
+    {'room': 'C02-4F Lakers', 'title': 'AAE Morning Wrap up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Brynn'},
+    {'room': 'C02-4F Rockets', 'title': 'SQE QA pre Sync w/PQM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '16:30', 'end_slot': '17:00', 'booker': 'Bay'},
+    {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM Wrap up', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '17:00', 'end_slot': '17:30', 'booker': 'Rachel'},
+    {'room': 'C01-4F Mickey', 'title': 'Others RIM DVT & OVB', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '17:30', 'end_slot': '18:00', 'booker': 'Kitsa'},
+    {'room': 'C02-4F Clippers', 'title': 'Mistral FATP EPM', 'start_date': '7/14', 'end_date': '7/20', 'start_slot': '19:00', 'end_slot': '19:30', 'booker': 'Rachel'},
+]
+
+ROOM_MAP = {
+    'C01-4F Mickey': 'c01-mickey',
+    'C01-4F Donald': 'c01-donald',
+    'C01-4F Pluto': 'c01-pluto',
+    'C01-4F Dumbo': 'c01-dumbo',
+    'C01-4F Pinocchio': 'c01-pinocchio',
+    'C01-4F Minnie': 'c01-minnie',
+    'C01-4F Goofy': 'c01-goofy',
+    'C01-4F Bambi': 'c01-bambi',
+    'C01-4F Elsa': 'c01-elsa',
+    'C01-4F Aurora': 'c01-aurora',
+    'C01-4F Ariel': 'c01-ariel',
+    'C02-4F Magic': 'c02-magic',
+    'C02-4F Cavaliers': 'c02-cavaliers',
+    'C02-4F Clippers': 'c02-clippers',
+    'C02-4F Celtics': 'c02-celtics',
+    'C02-4F Knicks': 'c02-knicks',
+    'C02-4F Lakers': 'c02-lakers',
+    'C02-4F Spurs': 'c02-spurs',
+    'C02-4F Thunder': 'c02-thunder',
+    'C02-4F Bulls': 'c02-bulls',
+    'C02-4F Rockets': 'c02-rockets',
+}
+
+def parse_date(date_str):
+    parts = date_str.split('/')
+    if len(parts) == 2:
+        return f'2026-{int(parts[0]):02d}-{int(parts[1]):02d}'
+    elif len(parts) == 3:
+        return f'{parts[2]}-{int(parts[0]):02d}-{int(parts[1]):02d}'
+    return None
+
+@app.route('/api/bookings/import/sample', methods=['POST'])
+def import_sample_data():
+    try:
+        conn = get_db()
+        c = conn.cursor()
+
+        user_map = {}
+        for user in SAMPLE_USERS:
+            c.execute(ph('SELECT id FROM users WHERE email = ?'), (user['email'],))
+            existing = c.fetchone()
+            if existing:
+                user_map[user['name']] = existing['id'] if isinstance(existing, dict) else existing[0]
+                continue
+            
+            user_id = str(uuid.uuid4())
+            c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?)'''),
+                      (user_id, user['email'], user['name'], '123456', 'user', datetime.now().isoformat()))
+            user_map[user['name']] = user_id
+
+        conn.commit()
+
+        count = 0
+        for booking in SAMPLE_BOOKINGS:
+            room_id = ROOM_MAP.get(booking['room'])
+            user_id = user_map.get(booking['booker'])
+            start_date = parse_date(booking['start_date'])
+            end_date = parse_date(booking['end_date'])
+            start_slot = booking['start_slot']
+            end_slot = booking['end_slot']
+            
+            if not room_id:
+                continue
+            if not user_id:
+                continue
+            if not start_date or not end_date:
+                continue
+
+            booking_id = str(uuid.uuid4())
+            c.execute(ph('''INSERT INTO bookings (id, room_id, user_id, title, start_date, end_date, 
+                         start_slot, end_slot, note, status, created_at, contact_name, contact_phone)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
+                      (booking_id, room_id, user_id, booking['title'], start_date, end_date,
+                       start_slot, end_slot, '', 'approved', datetime.now().isoformat(),
+                       user['name'] if user else '', user.get('phone', '') if user else ''))
+            count += 1
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': f'Successfully imported {count} sample bookings'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/bookings/import/undo', methods=['POST'])
 def undo_import():
     try:

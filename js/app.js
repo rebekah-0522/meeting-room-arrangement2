@@ -1050,6 +1050,27 @@
       e.target.value = '';
     });
 
+    const $importSampleBtn = $('#importSampleBtn');
+    if ($importSampleBtn) $importSampleBtn.addEventListener('click', async () => {
+      showModal('Import Sample Data', '<p>Are you sure you want to import sample booking data? This will add demo bookings for the current week.</p>', [
+        { text: 'Cancel', class: 'btn-secondary' },
+        { text: 'Confirm Import', class: 'btn-primary', onClick: async () => {
+          try {
+            const result = await apiRequest('/bookings/import/sample', { method: 'POST' });
+            if (result.success) {
+              showToast('Success', result.message, 'success');
+              await loadBookingsFromBackend();
+              renderSchedule();
+            } else {
+              showToast('Error', result.message || 'Failed to import sample data', 'danger');
+            }
+          } catch (error) {
+            showToast('Error', 'Failed to import sample data', 'danger');
+          }
+        }}
+      ]);
+    });
+
     const $exportLogsBtn = $('#exportLogsBtn');
     if ($exportLogsBtn) $exportLogsBtn.addEventListener('click', exportLogs);
     const $resetDataBtn = $('#resetDataBtn');
