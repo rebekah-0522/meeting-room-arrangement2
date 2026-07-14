@@ -910,7 +910,13 @@
     if ($filterWebex) $filterWebex.addEventListener('change', renderRoomList);
 
     const $viewMode = $('#viewMode');
-    if ($viewMode) $viewMode.addEventListener('change', renderSchedule);
+    if ($viewMode) $viewMode.addEventListener('change', () => {
+      const mode = $viewMode.value;
+      if (mode === 'week') {
+        $('#scheduleDate').value = getWeekStartDate(new Date());
+      }
+      renderSchedule();
+    });
     const $scheduleDate = $('#scheduleDate');
     if ($scheduleDate) {
       $scheduleDate.addEventListener('change', renderSchedule);

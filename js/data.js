@@ -136,6 +136,14 @@ function slotsBetween(startSlot, endSlot) {
   return slots;
 }
 
+function getWeekStartDate(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return monday.toISOString().slice(0, 10);
+}
+
 function getWeekDates(baseDate) {
   const date = new Date(baseDate);
   const day = date.getDay();
