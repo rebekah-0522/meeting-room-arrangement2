@@ -222,7 +222,7 @@ def handle_exception(e):
     traceback.print_exc()
     return jsonify({'success': False, 'message': str(e)}), 500
 
-print('[DEBUG] Initializing database...')
+print('[DEBUG] Initializing database v2...')
 try:
     init_db()
     print('[DEBUG] Application initialization complete')
@@ -495,7 +495,19 @@ TIME_SLOTS = [
     '20:00-20:30'
 ]
 
+TIME_POINTS = [
+    '08:00', '08:30', '09:00', '09:30',
+    '10:00', '10:30', '11:00', '11:30',
+    '12:00', '12:30', '13:00', '13:30',
+    '14:00', '14:30', '15:00', '15:30',
+    '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00', '19:30',
+    '20:00', '20:30'
+]
+
 def slot_index(slot):
+    if slot and '-' not in slot:
+        return TIME_POINTS.index(slot)
     return TIME_SLOTS.index(slot)
 
 def slots_between(start_slot, end_slot):
@@ -503,6 +515,8 @@ def slots_between(start_slot, end_slot):
     end = slot_index(end_slot)
     if start == -1 or end == -1 or end < start:
         return []
+    if start_slot and '-' not in start_slot:
+        return TIME_POINTS[start:end+1]
     return TIME_SLOTS[start:end+1]
 
 @app.route('/api/bookings', methods=['GET'])
@@ -571,6 +585,9 @@ def create_booking():
     start_slot = data.get('startSlot')
     end_slot = data.get('endSlot')
     note = data.get('note', '').strip()
+    contact_name = data.get('contactName', '').strip()
+    contact_phone = data.get('contactPhone', '').strip()
+    booker_name = data.get('bookerName', '').strip()
     
     if not room_id or not user_id or not title or not start_date or not end_date:
         return jsonify({'success': False, 'message': 'Missing required fields'})
@@ -635,7 +652,7 @@ def create_booking():
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''),
               (booking_id, room_id, user_id, title, start_date, end_date,
                start_slot, end_slot, note, 'pending' if needs_approval else 'approved',
-               datetime.now().isoformat(), '', ''))
+               datetime.now().isoformat(), contact_name, contact_phone))
     
     c.execute(ph('''INSERT INTO logs (action, detail, operator, timestamp)
                  VALUES (?, ?, ?, ?)'''),
@@ -651,13 +668,16 @@ def create_booking():
             'roomId': room_id,
             'userId': user_id,
             'title': title,
+            'bookerName': booker_name or user['name'],
+            'bookerEmail': user['email'],
+            'contactName': contact_name,
+            'contactPhone': contact_phone,
             'startDate': start_date,
             'endDate': end_date,
             'startSlot': start_slot,
             'endSlot': end_slot,
             'note': note,
-            'status': 'pending' if needs_approval else 'approved',
-            'booker': user['name']
+            'status': 'pending' if needs_approval else 'approved'
         },
         'needsApproval': needs_approval,
         'warnings': []

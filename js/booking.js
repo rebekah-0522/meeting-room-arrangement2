@@ -157,7 +157,7 @@ function summarizeConflicts(conflicts) {
 
 function createBooking(payload, user, options = {}) {
   console.log('createBooking called with:', payload, 'user:', user);
-  const { roomId, title, startDate, endDate, startSlot, endSlot, note, buildId, contactName, contactPhone } = payload;
+  const { roomId, title, startDate, endDate, startSlot, endSlot, note, buildId, contactName, contactPhone, bookerName } = payload;
   const room = getRoomById(roomId);
   if (!room) throw new Error('会议室不存在');
 
@@ -202,7 +202,7 @@ function createBooking(payload, user, options = {}) {
     id: generateId('bk'),
     roomId,
     title: title || '会议',
-    bookerName: user.name,
+    bookerName: bookerName || user.name,
     bookerEmail: user.email,
     contactName: contactName.trim(),
     contactPhone: contactPhone.replace(/\s+/g, ''),

@@ -14,6 +14,16 @@ const TIME_SLOTS = [
   '20:00-20:30'
 ];
 
+const TIME_POINTS = [
+  '08:00', '08:30', '09:00', '09:30',
+  '10:00', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00', '13:30',
+  '14:00', '14:30', '15:00', '15:30',
+  '16:00', '16:30', '17:00', '17:30',
+  '18:00', '18:30', '19:00', '19:30',
+  '20:00', '20:30'
+];
+
 const ROOM_TYPES = {
   normal: { label: 'Normal', color: '#ffffff' },
   epm: { label: 'EPM Only', color: '#fff9c4' },
@@ -87,6 +97,9 @@ function countDays(startDate, endDate) {
 }
 
 function slotIndex(slot) {
+  if (slot && !slot.includes('-')) {
+    return TIME_POINTS.indexOf(slot);
+  }
   return TIME_SLOTS.indexOf(slot);
 }
 
@@ -94,6 +107,9 @@ function slotsBetween(startSlot, endSlot) {
   const start = slotIndex(startSlot);
   const end = slotIndex(endSlot);
   if (start === -1 || end === -1 || end < start) return [];
+  if (startSlot && !startSlot.includes('-')) {
+    return TIME_POINTS.slice(start, end + 1);
+  }
   return TIME_SLOTS.slice(start, end + 1);
 }
 

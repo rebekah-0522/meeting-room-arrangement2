@@ -521,9 +521,9 @@
   function populateSlotSelects() {
     ['#bookStartSlot', '#bookEndSlot'].forEach(sel => {
       const el = $(sel);
-      el.innerHTML = TIME_SLOTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      el.innerHTML = TIME_POINTS.map(s => `<option value="${s}">${s}</option>`).join('');
     });
-    $('#bookEndSlot').value = TIME_SLOTS[3];
+    $('#bookEndSlot').value = TIME_POINTS[3];
   }
 
   function updateBookRoomOptions() {
@@ -582,6 +582,7 @@
       title: $('#bookTitle').value.trim(),
       contactName: $('#bookContactName').value.trim(),
       contactPhone: $('#bookContactPhone').value.trim(),
+      bookerName: $('#bookBookerName').value.trim(),
       startDate: $('#bookStartDate').value,
       endDate: $('#bookEndDate').value,
       startSlot: $('#bookStartSlot').value,
