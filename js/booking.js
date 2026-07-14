@@ -352,7 +352,7 @@ function getBookingsForDate(date, buildingFilter, roomFilter) {
 }
 
 function getBookingsForRoomDate(roomId, date) {
-  return getActiveBookings().filter(b => bookingOccupiesSlot(b, date, TIME_SLOTS[0]) || getDateRange(b.startDate, b.endDate).includes(date) && b.roomId === roomId);
+  return getActiveBookings().filter(b => bookingOccupiesSlot(b, date, TIME_POINTS[0]) || getDateRange(b.startDate, b.endDate).includes(date) && b.roomId === roomId);
 }
 
 function buildBookingIndex() {

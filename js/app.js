@@ -384,8 +384,9 @@
     });
     html += '</tr></thead><tbody>';
 
-    TIME_SLOTS.forEach(slot => {
-      html += `<tr><td class="time-col">${slot.split('-')[0]}</td>`;
+    TIME_POINTS.forEach((slot, idx) => {
+      if (idx >= TIME_POINTS.length - 1) return;
+      html += `<tr><td class="time-col">${slot}</td>`;
       rooms.forEach(room => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         const cls = status === 'free' ? 'free' : status;
@@ -418,8 +419,9 @@
     });
     html += '</tr></thead><tbody>';
 
-    TIME_SLOTS.forEach(slot => {
-      html += `<tr><td class="time-col">${slot.split('-')[0]}</td>`;
+    TIME_POINTS.forEach((slot, idx) => {
+      if (idx >= TIME_POINTS.length - 1) return;
+      html += `<tr><td class="time-col">${slot}</td>`;
       dates.forEach(date => {
         rooms.forEach(room => {
           const { status, booking } = getSlotStatus(room.id, date, slot);

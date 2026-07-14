@@ -505,19 +505,46 @@ TIME_POINTS = [
     '20:00', '20:30'
 ]
 
+def parse_time_to_minutes(time_str):
+    hours, minutes = map(int, time_str.split(':'))
+    return hours * 60 + minutes
+
 def slot_index(slot):
-    if slot and '-' not in slot:
-        return TIME_POINTS.index(slot)
-    return TIME_SLOTS.index(slot)
+    if not slot:
+        return -1
+    time_str = slot
+    if '-' in slot:
+        time_str = slot.split('-')[0]
+    try:
+        minutes = parse_time_to_minutes(time_str)
+        return (minutes - 480) // 30
+    except:
+        return -1
 
 def slots_between(start_slot, end_slot):
-    start = slot_index(start_slot)
-    end = slot_index(end_slot)
-    if start == -1 or end == -1 or end < start:
+    if not start_slot or not end_slot:
         return []
-    if start_slot and '-' not in start_slot:
-        return TIME_POINTS[start:end+1]
-    return TIME_SLOTS[start:end+1]
+    
+    start_str = start_slot
+    end_str = end_slot
+    
+    if '-' in start_slot:
+        start_str = start_slot.split('-')[0]
+    if '-' in end_slot:
+        end_str = end_slot.split('-')[1]
+    
+    try:
+        start_minutes = parse_time_to_minutes(start_str)
+        end_minutes = parse_time_to_minutes(end_str)
+    except:
+        return []
+    
+    slots = []
+    for m in range(start_minutes, end_minutes, 30):
+        h = m // 60
+        min = m % 60
+        slots.append(f'{h:02d}:{min:02d}')
+    return slots
 
 @app.route('/api/bookings', methods=['GET'])
 def get_bookings():

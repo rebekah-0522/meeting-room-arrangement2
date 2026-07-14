@@ -25,7 +25,7 @@ function downloadCSV(filename, rows) {
 function exportWeeklySchedule(weekStartDate, buildingFilter) {
   const dates = getWeekDates(weekStartDate);
   const rooms = appState.rooms.filter(r => !buildingFilter || buildingFilter === 'all' || r.building === buildingFilter);
-  const header = ['会议室', '楼栋', '容量', 'Webex', '投影仪', '类型', ...dates.flatMap(d => TIME_SLOTS.map(s => `${d} ${s}`))];
+  const header = ['会议室', '楼栋', '容量', 'Webex', '投影仪', '类型', ...dates.flatMap(d => TIME_POINTS.slice(0, -1).map(s => `${d} ${s}`))];
   const rows = [header];
 
   rooms.forEach(room => {
@@ -38,7 +38,7 @@ function exportWeeklySchedule(weekStartDate, buildingFilter) {
       ROOM_TYPES[room.roomType]?.label || '普通',
     ];
     dates.forEach(date => {
-      TIME_SLOTS.forEach(slot => {
+      TIME_POINTS.slice(0, -1).forEach(slot => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         if (status === 'free') row.push('');
         else row.push(`${booking.bookerName || booking.bookerEmail} - ${booking.title}${status === 'pending' ? '(待审)' : ''}`);
@@ -96,7 +96,7 @@ function exportMonthlySchedule(year, month, buildingFilter) {
   const rows = [header];
 
   dates.forEach(date => {
-    TIME_SLOTS.forEach(slot => {
+    TIME_POINTS.slice(0, -1).forEach(slot => {
       rooms.forEach(room => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         if (status === 'free') return;
@@ -210,6 +210,14 @@ function normalizeSlot(val) {
   const strVal = String(val).trim();
   const foundPoint = TIME_POINTS.find(s => s === strVal || s.startsWith(strVal));
   if (foundPoint) return foundPoint;
+  if (strVal.includes('-')) {
+    const parts = strVal.split('-');
+    if (parts.length === 2) {
+      const startPart = parts[0].trim();
+      const foundStart = TIME_POINTS.find(s => s === startPart || s.startsWith(startPart));
+      if (foundStart) return foundStart;
+    }
+  }
   const foundSlot = TIME_SLOTS.find(s => s === strVal || s.startsWith(strVal));
   return foundSlot || TIME_POINTS[0];
 }

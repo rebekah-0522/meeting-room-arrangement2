@@ -56,6 +56,10 @@ def parse_date(date_str):
         return f'{parts[2]}-{int(parts[0]):02d}-{int(parts[1]):02d}'
     return None
 
+def parse_time_to_minutes(time_str):
+    hours, minutes = map(int, time_str.split(':'))
+    return hours * 60 + minutes
+
 def get_slot(time_str):
     time_str = time_str.strip().replace('–', '-')
     for slot in TIME_POINTS:
@@ -64,6 +68,17 @@ def get_slot(time_str):
     for slot in TIME_SLOTS:
         if slot == time_str or time_str.startswith(slot):
             return slot
+    if '-' in time_str:
+        parts = time_str.split('-')
+        if len(parts) == 2:
+            try:
+                start_minutes = parse_time_to_minutes(parts[0].strip())
+                end_minutes = parse_time_to_minutes(parts[1].strip())
+                h = start_minutes // 60
+                min = start_minutes % 60
+                return f'{h:02d}:{min:02d}'
+            except:
+                pass
     return None
 
 users_data = [

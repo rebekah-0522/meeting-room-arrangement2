@@ -96,21 +96,44 @@ function countDays(startDate, endDate) {
   return getDateRange(startDate, endDate).length;
 }
 
+function parseTimeToMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
 function slotIndex(slot) {
-  if (slot && !slot.includes('-')) {
-    return TIME_POINTS.indexOf(slot);
+  if (!slot) return -1;
+  let timeStr = slot;
+  if (slot.includes('-')) {
+    timeStr = slot.split('-')[0];
   }
-  return TIME_SLOTS.indexOf(slot);
+  const minutes = parseTimeToMinutes(timeStr);
+  return Math.floor((minutes - 480) / 30);
 }
 
 function slotsBetween(startSlot, endSlot) {
-  const start = slotIndex(startSlot);
-  const end = slotIndex(endSlot);
-  if (start === -1 || end === -1 || end < start) return [];
-  if (startSlot && !startSlot.includes('-')) {
-    return TIME_POINTS.slice(start, end + 1);
+  if (!startSlot || !endSlot) return [];
+  
+  let startStr = startSlot;
+  let endStr = endSlot;
+  
+  if (startSlot.includes('-')) {
+    startStr = startSlot.split('-')[0];
   }
-  return TIME_SLOTS.slice(start, end + 1);
+  if (endSlot.includes('-')) {
+    endStr = endSlot.split('-')[1];
+  }
+  
+  const startMinutes = parseTimeToMinutes(startStr);
+  const endMinutes = parseTimeToMinutes(endStr);
+  
+  const slots = [];
+  for (let m = startMinutes; m < endMinutes; m += 30) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    slots.push(`${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
+  }
+  return slots;
 }
 
 function getWeekDates(baseDate) {
