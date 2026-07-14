@@ -898,7 +898,8 @@
     });
 
     const $logoutBtn = $('#logoutBtn');
-    if ($logoutBtn) $logoutBtn.addEventListener('click', () => {
+    if ($logoutBtn) $logoutBtn.addEventListener('click', async () => {
+      await apiRequest('/logout', { method: 'POST' });
       clearCurrentUser();
       location.reload();
     });
@@ -1005,10 +1006,24 @@
     });
   }
 
-  function init() {
+  async function checkSession() {
+    try {
+      const result = await apiRequest('/current-user');
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
+        return true;
+      }
+    } catch (error) {
+      console.error('Session check failed:', error);
+    }
+    return false;
+  }
+
+  async function init() {
     initLogin();
     bindEvents();
-    if (getCurrentUser()) {
+    const sessionUser = await checkSession();
+    if (sessionUser || getCurrentUser()) {
       enterApp();
     }
   }

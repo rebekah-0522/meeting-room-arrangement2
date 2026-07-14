@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response
+from flask import Flask, request, jsonify, send_from_directory, make_response, session
 from flask_cors import CORS
 import sqlite3
 import json
@@ -34,7 +34,10 @@ app = Flask(__name__,
             static_folder=PROJECT_ROOT, 
             static_url_path='',
             template_folder=PROJECT_ROOT)
-CORS(app)
+app.secret_key = os.environ.get('SECRET_KEY', 'meeting-room-secret-key-2024')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+CORS(app, supports_credentials=True)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DATABASE = os.path.join(BASE_DIR, 'meeting_room.db')
@@ -262,6 +265,10 @@ def login():
     if email == 'rebekah.xy.he@mail.foxconn.com':
         role = 'epm'
     
+    session['user_id'] = user['id']
+    session['user_email'] = user['email']
+    session['user_role'] = role
+    
     return jsonify({
         'success': True,
         'user': {
@@ -272,6 +279,42 @@ def login():
             'credit': user['credit']
         }
     })
+
+@app.route('/api/current-user', methods=['GET'])
+def current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(ph('SELECT * FROM users WHERE id = ?'), (user_id,))
+    user = c.fetchone()
+    conn.close()
+    
+    if not user:
+        session.clear()
+        return jsonify({'success': False, 'message': 'User not found'})
+    
+    role = user['role']
+    if user['email'] == 'rebekah.xy.he@mail.foxconn.com':
+        role = 'epm'
+    
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': user['id'],
+            'name': user['name'] or user['email'].split('@')[0],
+            'email': user['email'],
+            'role': role,
+            'credit': user['credit']
+        }
+    })
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'success': True, 'message': 'Logged out successfully'})
 
 @app.route('/api/forgot-password', methods=['POST'])
 def forgot_password():

@@ -4,6 +4,7 @@ async function apiRequest(url, options = {}) {
   try {
     console.log('API Request:', `${API_BASE}${url}`, options);
     const response = await fetch(`${API_BASE}${url}`, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
