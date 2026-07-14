@@ -165,9 +165,6 @@ function createBooking(payload, user, options = {}) {
   if (!roomCheck.allowed) throw new Error(roomCheck.reason);
 
   const days = countDays(startDate, endDate);
-  if (days > EPM_ONLY_DAYS && !isEPM(user)) {
-    throw new Error(`Booking exceeds ${EPM_ONLY_DAYS} days. Please contact Meeting EPM (${EPM_NAME}: ${EPM_EMAIL}).`);
-  }
 
   if (!contactName || !contactName.trim()) {
     throw new Error('请填写会议预约人姓名');
