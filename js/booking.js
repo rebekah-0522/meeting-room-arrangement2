@@ -103,7 +103,7 @@ function bookingOccupiesSlot(booking, date, slot) {
   }
   const dates = getDateRange(booking.startDate, booking.endDate);
   if (!dates.includes(date)) return false;
-  const slots = booking.slots || slotsBetween(booking.startSlot, booking.endSlot);
+  const slots = (booking.slots && booking.slots.length > 0) ? booking.slots : slotsBetween(booking.startSlot, booking.endSlot);
   return slots.includes(slot);
 }
 
@@ -354,7 +354,7 @@ function buildBookingIndex() {
   const index = new Map();
   getActiveBookings().forEach(b => {
     const dates = getDateRange(b.startDate, b.endDate);
-    const slots = b.slots || slotsBetween(b.startSlot, b.endSlot);
+    const slots = (b.slots && b.slots.length > 0) ? b.slots : slotsBetween(b.startSlot, b.endSlot);
     dates.forEach(date => {
       slots.forEach(slot => {
         const key = `${b.roomId}_${date}_${slot}`;
