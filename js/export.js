@@ -206,9 +206,12 @@ function normalizeDate(val) {
 }
 
 function normalizeSlot(val) {
-  if (!val) return TIME_SLOTS[0];
-  const found = TIME_SLOTS.find(s => s === val || s.startsWith(val));
-  return found || TIME_SLOTS[0];
+  if (!val) return TIME_POINTS[0];
+  const strVal = String(val).trim();
+  const foundPoint = TIME_POINTS.find(s => s === strVal || s.startsWith(strVal));
+  if (foundPoint) return foundPoint;
+  const foundSlot = TIME_SLOTS.find(s => s === strVal || s.startsWith(strVal));
+  return foundSlot || TIME_POINTS[0];
 }
 
 function importBookingsFromRecords(records, user, forceOverwrite = false) {

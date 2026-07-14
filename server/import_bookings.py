@@ -38,6 +38,16 @@ TIME_SLOTS = [
     '20:00-20:30'
 ]
 
+TIME_POINTS = [
+    '08:00', '08:30', '09:00', '09:30',
+    '10:00', '10:30', '11:00', '11:30',
+    '12:00', '12:30', '13:00', '13:30',
+    '14:00', '14:30', '15:00', '15:30',
+    '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00', '19:30',
+    '20:00', '20:30'
+]
+
 def parse_date(date_str):
     parts = date_str.split('/')
     if len(parts) == 2:
@@ -48,8 +58,11 @@ def parse_date(date_str):
 
 def get_slot(time_str):
     time_str = time_str.strip().replace('–', '-')
+    for slot in TIME_POINTS:
+        if slot == time_str or time_str.startswith(slot):
+            return slot
     for slot in TIME_SLOTS:
-        if slot == time_str:
+        if slot == time_str or time_str.startswith(slot):
             return slot
     return None
 
