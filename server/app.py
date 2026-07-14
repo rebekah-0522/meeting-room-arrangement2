@@ -624,7 +624,30 @@ def get_bookings():
     c.execute(ph(query), params)
     bookings = []
     for row in c.fetchall():
-        booking = dict(row)
+        row_dict = dict(row)
+        booking = {
+            'id': row_dict['id'],
+            'roomId': row_dict['room_id'],
+            'userId': row_dict['user_id'],
+            'title': row_dict['title'],
+            'bookerName': row_dict.get('booker_name', '') or row_dict.get('bookerName', ''),
+            'bookerEmail': '',
+            'contactName': row_dict.get('contact_name', '') or row_dict.get('contactName', ''),
+            'contactPhone': row_dict.get('contact_phone', '') or row_dict.get('contactPhone', ''),
+            'startDate': row_dict['start_date'],
+            'endDate': row_dict['end_date'],
+            'startSlot': row_dict['start_slot'],
+            'endSlot': row_dict['end_slot'],
+            'slots': [],
+            'note': row_dict.get('note', '') or '',
+            'buildId': row_dict.get('build_id') or None,
+            'status': row_dict['status'],
+            'createdAt': row_dict.get('created_at') or '',
+            'approvedBy': row_dict.get('approved_by') or None,
+            'approvedAt': row_dict.get('approved_at') or None,
+            'cancelledAt': row_dict.get('cancelled_at') or None,
+            'cancelReason': row_dict.get('cancel_reason') or ''
+        }
         bookings.append(booking)
     
     conn.close()
