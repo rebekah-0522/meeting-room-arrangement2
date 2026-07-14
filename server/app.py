@@ -628,7 +628,7 @@ def get_bookings():
         bookings.append(booking)
     
     conn.close()
-    return jsonify(bookings)
+    return jsonify({'success': True, 'data': bookings})
 
 @app.route('/api/bookings/<booking_id>', methods=['GET'])
 def get_booking(booking_id):

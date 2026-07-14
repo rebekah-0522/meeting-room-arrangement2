@@ -216,7 +216,6 @@ function createBooking(payload, user, options = {}) {
     approvedAt: status === BOOKING_STATUS.approved ? new Date().toISOString() : null
   };
 
-  console.log('Creating booking:', booking);
   appState.bookings.push(booking);
   saveState(appState);
 
@@ -238,7 +237,6 @@ function createBooking(payload, user, options = {}) {
     });
   }
 
-  console.log('Booking created successfully, returning result');
   return { success: true, booking, warnings, needsApproval: approval.required };
 }
 

@@ -291,7 +291,7 @@
     }
   }
 
-  function enterApp() {
+  async function enterApp() {
     const user = getCurrentUser();
     $('#loginPage').classList.add('hidden');
     $('#mainNav').style.display = '';
@@ -300,6 +300,7 @@
     if (isEPM(user)) {
       $('#adminTab').classList.remove('hidden');
     }
+    await loadBookingsFromBackend();
     updateNotifBadge();
     navigate('home');
   }
@@ -602,10 +603,10 @@
     }
 
     try {
-      const result = createBooking(payload, user);
+      const validateResult = createBooking(payload, user);
       
-      if (!result.success) {
-        const conflictText = result.conflicts.map(c =>
+      if (!validateResult.success) {
+        const conflictText = validateResult.conflicts.map(c =>
           `在 <strong>${c.date}</strong> 已被 <strong>${c.booker}</strong> 预约`
         ).join('<br>');
         showModal('预约失败', `
@@ -616,7 +617,50 @@
         return;
       }
 
-      const { booking, warnings, needsApproval: pending } = result;
+      const { booking, warnings, needsApproval: pending } = validateResult;
+      
+      const apiResult = await apiCreateBooking({
+        userId: user.id,
+        roomId: booking.roomId,
+        title: booking.title,
+        contactName: booking.contactName,
+        contactPhone: booking.contactPhone,
+        bookerName: booking.bookerName,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        startSlot: booking.startSlot,
+        endSlot: booking.endSlot,
+        note: booking.note,
+        slots: booking.slots,
+        status: booking.status
+      });
+
+      if (!apiResult.success) {
+        if (apiResult.conflicts) {
+          const conflictText = apiResult.conflicts.map(c =>
+            `在 <strong>${c.date}</strong> 已被 <strong>${c.booker}</strong> 预约`
+          ).join('<br>');
+          showModal('预约失败', `
+            <p>以下会议室存在时间冲突：</p>
+            <div class="alert alert-danger">${conflictText}</div>
+            <p>请重新选择时间或会议室。</p>
+          `, [{ text: '确定', class: 'btn-primary' }]);
+        } else {
+          showToast('Error', apiResult.message || 'Failed to create booking', 'danger');
+        }
+        const idx = appState.bookings.findIndex(b => b.id === booking.id);
+        if (idx >= 0) {
+          appState.bookings.splice(idx, 1);
+          saveState(appState);
+        }
+        return;
+      }
+
+      if (apiResult.booking) {
+        booking.id = apiResult.booking.id;
+        saveState(appState);
+      }
+
       let msg = pending
         ? '<div class="alert alert-info">预约成功，等待Meeting Room Admin确认。</div>'
         : '<div class="alert alert-success">预约成功！您的会议室已被预定。</div>';
@@ -679,8 +723,13 @@
           const id = btn.dataset.cancel;
           showModal('Confirm Cancellation', '<p>Are you sure you want to cancel this booking? Frequent cancellations will affect your credit record.</p>', [
             { text: 'Keep', class: 'btn-secondary' },
-            { text: 'Confirm Cancel', class: 'btn-danger', onClick: () => {
+            { text: 'Confirm Cancel', class: 'btn-danger', onClick: async () => {
               const res = cancelBooking(id, user);
+              try {
+                await apiCancelBooking(id);
+              } catch (error) {
+                console.error('Failed to sync cancellation to backend:', error);
+              }
               if (res.badCredit) {
                 showToast('Cancelled', 'More than 3 cancellations this month, marked as Bad Credit', 'warning');
               }
@@ -727,11 +776,16 @@
     }).join('');
 
     container.querySelectorAll('[data-approve]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const res = approveBooking(btn.dataset.approve, getCurrentUser());
         if (!res.success) {
           showToast('Conflict', 'This time slot conflicts with another booking', 'danger');
         } else {
+          try {
+            await apiApproveBooking(btn.dataset.approve);
+          } catch (error) {
+            console.error('Failed to sync approval to backend:', error);
+          }
           showToast('Approved', 'Confirmation email sent to booker (simulated)', 'success');
         }
         renderMyBookings();
@@ -740,8 +794,13 @@
     });
 
     container.querySelectorAll('[data-reject]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         rejectBooking(btn.dataset.reject, getCurrentUser(), 'Rejected by EPM');
+        try {
+          await apiRejectBooking(btn.dataset.reject);
+        } catch (error) {
+          console.error('Failed to sync rejection to backend:', error);
+        }
         showToast('Rejected', 'Notified the booker', 'info');
         renderMyBookings();
       });
@@ -1010,6 +1069,18 @@
     if ($modalOverlay) $modalOverlay.addEventListener('click', (e) => {
       if (e.target === $modalOverlay) hideModal();
     });
+  }
+
+  async function loadBookingsFromBackend() {
+    try {
+      const result = await apiGetBookings();
+      if (result.success && result.data) {
+        appState.bookings = result.data;
+        saveState(appState);
+      }
+    } catch (error) {
+      console.error('Failed to load bookings from backend:', error);
+    }
   }
 
   async function checkSession() {
