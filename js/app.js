@@ -235,11 +235,6 @@
       }
     });
 
-    $('#showQRCodeLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      showQRCode();
-    });
-
     $('#qrModalClose').addEventListener('click', () => {
       $('#qrModal').classList.add('hidden');
     });
@@ -249,6 +244,8 @@
         $('#qrModal').classList.add('hidden');
       }
     });
+
+    generateLoginQRCode();
   }
 
   function showQRCode() {
@@ -270,6 +267,27 @@
     } catch (err) {
       console.error('QR code generation error:', err);
       showToast('Error', 'Failed to generate QR code', 'danger');
+    }
+  }
+
+  function generateLoginQRCode() {
+    const url = window.location.origin + window.location.pathname;
+    const qrContainer = $('#loginQrcode');
+    if (!qrContainer) return;
+    qrContainer.innerHTML = '';
+    
+    try {
+      new QRCode(qrContainer, {
+        text: url,
+        width: 180,
+        height: 180,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      $('#loginQrUrl').textContent = url;
+    } catch (err) {
+      console.error('Login QR code generation error:', err);
     }
   }
 
@@ -371,9 +389,9 @@
       rooms.forEach(room => {
         const { status, booking } = getSlotStatus(room.id, date, slot);
         const cls = status === 'free' ? 'free' : status;
-        const title = booking ? `${booking.bookerName}: ${booking.title}` : '';
+        const title = booking ? `${booking.contactName}: ${booking.title}` : '';
         html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}" title="${title}">`;
-        if (booking) html += `<span class="cell-title">${booking.bookerName?.split(' ')[0] || 'Booked'}</span>`;
+        if (booking) html += `<span class="cell-title">${booking.contactName}</span>`;
         html += '</td>';
       });
       html += '</tr>';
@@ -407,7 +425,7 @@
           const { status, booking } = getSlotStatus(room.id, date, slot);
           const cls = status === 'free' ? 'free' : status;
           html += `<td class="slot-cell ${cls}" data-room="${room.id}" data-date="${date}" data-slot="${slot}">`;
-          if (booking) html += `<span class="cell-title">●</span>`;
+          if (booking) html += `<span class="cell-title">${booking.contactName}</span>`;
           html += '</td>';
         });
       });
@@ -474,6 +492,7 @@
           showModal('预约详情', `
             <p><strong>${booking.title}</strong></p>
             <p>会议室：${formatRoomLabel(roomObj)}</p>
+            <p>预约部门：${booking.contactName}</p>
             <p>预约人：${booking.bookerName} (${booking.bookerEmail})</p>
             <p>日期：${booking.startDate} ~ ${booking.endDate}</p>
             <p>时段：${booking.startSlot} - ${booking.endSlot}</p>

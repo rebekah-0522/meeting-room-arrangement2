@@ -222,6 +222,14 @@ def handle_exception(e):
     traceback.print_exc()
     return jsonify({'success': False, 'message': str(e)}), 500
 
+print('[DEBUG] Initializing database...')
+try:
+    init_db()
+    print('[DEBUG] Application initialization complete')
+except Exception as e:
+    print('[ERROR] Application initialization failed:', str(e))
+    traceback.print_exc()
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
@@ -961,13 +969,6 @@ def generate_qrcode():
     return response
 
 if __name__ == '__main__':
-    try:
-        init_db()
-        print('[DEBUG] Application initialization complete')
-    except Exception as e:
-        print('[ERROR] Application initialization failed:', str(e))
-        traceback.print_exc()
-    
     try:
         port = int(os.environ.get('PORT', 5000))
         print('[DEBUG] Starting Flask server...')
