@@ -145,7 +145,10 @@ function getWeekStartDate(date) {
 }
 
 function getWeekDates(baseDate) {
-  const date = new Date(baseDate);
+  let date = new Date(baseDate);
+  if (isNaN(date.getTime())) {
+    date = new Date();
+  }
   const day = date.getDay();
   const monday = new Date(date);
   monday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
@@ -170,6 +173,11 @@ function getMonthDates(year, month) {
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isValidDate(dateStr) {
+  const d = new Date(dateStr);
+  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === dateStr;
 }
 
 function isWeekend(dateStr) {

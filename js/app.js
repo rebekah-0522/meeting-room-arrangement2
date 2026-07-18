@@ -340,7 +340,11 @@
 
   function renderSchedule() {
     const mode = $('#viewMode').value;
-    const date = $('#scheduleDate').value || todayStr();
+    let date = $('#scheduleDate').value || todayStr();
+    if (!isValidDate(date)) {
+      date = todayStr();
+      $('#scheduleDate').value = date;
+    }
     const building = $('#scheduleBuilding').value;
     const room = $('#scheduleRoom').value;
     const container = $('#scheduleContent');
@@ -593,6 +597,14 @@
       note: $('#bookNote').value.trim()
     };
 
+    if (!isValidDate(payload.startDate)) {
+      showToast('Date Error', 'Invalid start date', 'danger');
+      return;
+    }
+    if (!isValidDate(payload.endDate)) {
+      showToast('Date Error', 'Invalid end date', 'danger');
+      return;
+    }
     if (payload.endDate < payload.startDate) {
       showToast('Date Error', 'End date cannot be earlier than start date', 'danger');
       return;
