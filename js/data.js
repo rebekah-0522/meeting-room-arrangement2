@@ -86,7 +86,7 @@ function getDateRange(startDate, endDate) {
   const current = new Date(startDate);
   const end = new Date(endDate);
   while (current <= end) {
-    dates.push(current.toISOString().slice(0, 10));
+    dates.push(formatDate(current));
     current.setDate(current.getDate() + 1);
   }
   return dates;
@@ -141,7 +141,7 @@ function getWeekStartDate(date) {
   const day = d.getDay();
   const monday = new Date(d);
   monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return monday.toISOString().slice(0, 10);
+  return formatDate(monday);
 }
 
 function getWeekDates(baseDate) {
@@ -156,7 +156,7 @@ function getWeekDates(baseDate) {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    dates.push(d.toISOString().slice(0, 10));
+    dates.push(formatDate(d));
   }
   return dates;
 }
@@ -165,19 +165,25 @@ function getMonthDates(year, month) {
   const dates = [];
   const d = new Date(year, month - 1, 1);
   while (d.getMonth() === month - 1) {
-    dates.push(d.toISOString().slice(0, 10));
+    dates.push(formatDate(d));
     d.setDate(d.getDate() + 1);
   }
   return dates;
 }
 
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return formatDate(new Date());
 }
 
 function isValidDate(dateStr) {
   const d = new Date(dateStr);
-  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === dateStr;
+  if (isNaN(d.getTime())) return false;
+  const formatted = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return formatted === dateStr;
 }
 
 function isWeekend(dateStr) {

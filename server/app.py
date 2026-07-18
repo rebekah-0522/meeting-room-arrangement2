@@ -1125,7 +1125,7 @@ ROOM_MAP = {
 def parse_date(date_str):
     parts = date_str.split('/')
     if len(parts) == 2:
-        return f'2026-{int(parts[0]):02d}-{int(parts[1]):02d}'
+        return f'{datetime.now().year}-{int(parts[0]):02d}-{int(parts[1]):02d}'
     elif len(parts) == 3:
         return f'{parts[2]}-{int(parts[0]):02d}-{int(parts[1]):02d}'
     return None
