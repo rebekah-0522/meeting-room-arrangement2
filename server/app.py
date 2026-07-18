@@ -525,7 +525,7 @@ def get_date_range(start_date, end_date):
     end = datetime.strptime(end_date, '%Y-%m-%d')
     while current <= end:
         dates.append(current.strftime('%Y-%m-%d'))
-        current = current.replace(day=current.day + 1)
+        current += timedelta(days=1)
     return dates
 
 TIME_SLOTS = [
