@@ -1123,22 +1123,7 @@
       const result = await apiGetBookings();
       if (result.success && result.data) {
         const backendBookings = result.data.map(b => convertBookingFields(b));
-        const localBookingIds = new Set(appState.bookings.map(b => b.id));
-        const backendBookingIds = new Set(backendBookings.map(b => b.id));
-        
-        const mergedBookings = [];
-        
-        backendBookings.forEach(booking => {
-          mergedBookings.push(booking);
-        });
-        
-        appState.bookings.forEach(localBooking => {
-          if (!backendBookingIds.has(localBooking.id)) {
-            mergedBookings.push(localBooking);
-          }
-        });
-        
-        appState.bookings = mergedBookings;
+        appState.bookings = backendBookings;
         saveState(appState);
       }
     } catch (error) {
