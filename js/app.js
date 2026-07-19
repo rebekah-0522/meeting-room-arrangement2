@@ -501,6 +501,7 @@
             <p>会议室：${formatRoomLabel(roomObj)}</p>
             <p>预约部门：${booking.contactName}</p>
             <p>预约人：${booking.bookerName} (${booking.bookerEmail})</p>
+            ${booking.contactPhone ? `<p>联系电话：${booking.contactPhone}</p>` : ''}
             <p>日期：${booking.startDate} ~ ${booking.endDate}</p>
             <p>时段：${booking.startSlot} - ${booking.endSlot}</p>
             <p>状态：<span class="status-pill ${booking.status}">${statusLabel(booking.status)}</span></p>
