@@ -101,8 +101,7 @@ function bookingOccupiesSlot(booking, date, slot) {
   if (booking.status === BOOKING_STATUS.cancelled || booking.status === BOOKING_STATUS.rejected) {
     return false;
   }
-  const dates = getDateRange(booking.startDate, booking.endDate);
-  if (!dates.includes(date)) return false;
+  if (date < booking.startDate || date > booking.endDate) return false;
   const slots = (booking.slots && booking.slots.length > 0) ? booking.slots : slotsBetween(booking.startSlot, booking.endSlot);
   return slots.includes(slot);
 }
@@ -347,37 +346,21 @@ function getBookingsForDate(date, buildingFilter, roomFilter) {
 }
 
 function getBookingsForRoomDate(roomId, date) {
-  return getActiveBookings().filter(b => bookingOccupiesSlot(b, date, TIME_POINTS[0]) || getDateRange(b.startDate, b.endDate).includes(date) && b.roomId === roomId);
-}
-
-function buildBookingIndex() {
-  const index = new Map();
-  getActiveBookings().forEach(b => {
-    const dates = getDateRange(b.startDate, b.endDate);
-    const slots = (b.slots && b.slots.length > 0) ? b.slots : slotsBetween(b.startSlot, b.endSlot);
-    dates.forEach(date => {
-      slots.forEach(slot => {
-        const key = `${b.roomId}_${date}_${slot}`;
-        if (!index.has(key)) {
-          index.set(key, b);
-        }
-      });
-    });
+  return getActiveBookings().filter(b => {
+    if (b.roomId !== roomId) return false;
+    if (b.status === BOOKING_STATUS.cancelled || b.status === BOOKING_STATUS.rejected) return false;
+    return date >= b.startDate && date <= b.endDate;
   });
-  return index;
 }
-
-let bookingIndex = null;
-let lastIndexTime = 0;
 
 function getSlotStatus(roomId, date, slot) {
-  const now = Date.now();
-  if (!bookingIndex || now - lastIndexTime > 1000) {
-    bookingIndex = buildBookingIndex();
-    lastIndexTime = now;
-  }
-  const key = `${roomId}_${date}_${slot}`;
-  const booking = bookingIndex.get(key);
+  const booking = getActiveBookings().find(b => {
+    if (b.roomId !== roomId) return false;
+    if (b.status === BOOKING_STATUS.cancelled || b.status === BOOKING_STATUS.rejected) return false;
+    if (date < b.startDate || date > b.endDate) return false;
+    const slots = (b.slots && b.slots.length > 0) ? b.slots : slotsBetween(b.startSlot, b.endSlot);
+    return slots.includes(slot);
+  });
   if (!booking) return { status: 'free', booking: null };
   return {
     status: booking.status === BOOKING_STATUS.pending ? 'pending' : 'booked',
