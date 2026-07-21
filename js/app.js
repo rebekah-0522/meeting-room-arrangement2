@@ -278,7 +278,7 @@
         height: 200,
         colorDark: '#000000',
         colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
+        correctLevel: 2
       });
       $('#qrUrl').textContent = url;
       $('#qrModal').classList.remove('hidden');
@@ -310,7 +310,7 @@
         height: 180,
         colorDark: '#000000',
         colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
+        correctLevel: 2
       });
     } catch (err) {
       console.error('Login QR code generation error:', err);
