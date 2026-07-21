@@ -128,11 +128,29 @@
     });
     
     $('#registerBtn').addEventListener('click', async () => {
-      const name = $('#registerName').value.trim();
       const email = $('#registerEmail').value.trim().toLowerCase();
+      const password = $('#registerPassword').value.trim();
+      const confirmPassword = $('#registerConfirmPassword').value.trim();
+      const name = $('#registerName').value.trim();
       
       if (!email) {
         showToast('Please fill in', 'Email is required', 'warning');
+        return;
+      }
+      if (!password) {
+        showToast('Please fill in', 'Password is required', 'warning');
+        return;
+      }
+      if (password.length < 6) {
+        showToast('Validation Error', 'Password must be at least 6 characters', 'warning');
+        return;
+      }
+      if (password !== confirmPassword) {
+        showToast('Validation Error', 'Passwords do not match', 'warning');
+        return;
+      }
+      if (!name) {
+        showToast('Please fill in', 'Name is required', 'warning');
         return;
       }
       
@@ -140,11 +158,11 @@
         const result = await apiRequest('/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email })
+          body: JSON.stringify({ email, password, name })
         });
         
         if (result.success) {
-          showToast('Success', 'Account created! Initial password is 123456.', 'success');
+          showToast('Success', 'Account created! You can now login.', 'success');
           $('#registerForm').classList.add('hidden');
           $('#loginForm').classList.remove('hidden');
           $('#loginEmail').value = email;

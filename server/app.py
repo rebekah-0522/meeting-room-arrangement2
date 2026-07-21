@@ -393,10 +393,15 @@ def get_users():
 def create_user():
     data = request.json
     email = data.get('email', '').strip().lower()
+    password = data.get('password', '').strip()
     name = data.get('name', '').strip()
     
     if not email:
         return jsonify({'success': False, 'message': 'Email is required'})
+    if not password:
+        return jsonify({'success': False, 'message': 'Password is required'})
+    if len(password) < 6:
+        return jsonify({'success': False, 'message': 'Password must be at least 6 characters'})
     
     conn = get_db()
     c = conn.cursor()
@@ -406,8 +411,7 @@ def create_user():
         conn.close()
         return jsonify({'success': False, 'message': 'User already exists'})
     
-    default_password = '123456'
-    hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     user_id = str(uuid.uuid4())
     c.execute(ph('''INSERT INTO users (id, email, name, password, role, credit, created_at)
