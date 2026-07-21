@@ -318,6 +318,7 @@
     if (isEPM(user)) {
       $('#adminTab').classList.remove('hidden');
     }
+    await loadRoomsFromBackend();
     await loadBookingsFromBackend();
     updateNotifBadge();
     navigate('home');
@@ -891,16 +892,27 @@
     `).join('');
 
     container.querySelectorAll('input, select').forEach(el => {
-      el.addEventListener('change', () => {
+      el.addEventListener('change', async () => {
         const room = getRoomById(el.dataset.room);
         if (!room) return;
+        let newValue;
         if (el.type === 'checkbox') {
-          room[el.dataset.field] = el.checked;
+          newValue = el.checked;
+          room[el.dataset.field] = newValue;
         } else {
-          room[el.dataset.field] = el.value;
+          newValue = el.value;
+          room[el.dataset.field] = newValue;
         }
         saveState(appState);
-        addLog('Edit Room', `${formatRoomLabel(room)} ${el.dataset.field}=${el.type === 'checkbox' ? el.checked : el.value}`, getCurrentUser().name);
+        addLog('Edit Room', `${formatRoomLabel(room)} ${el.dataset.field}=${newValue}`, getCurrentUser().name);
+        
+        try {
+          const updateData = {};
+          updateData[el.dataset.field] = newValue;
+          await apiUpdateRoom(room.id, updateData);
+        } catch (error) {
+          console.error('Failed to sync room update to backend:', error);
+        }
       });
     });
   }
@@ -1159,6 +1171,27 @@
       }
     } catch (error) {
       console.error('Failed to load bookings from backend:', error);
+    }
+  }
+
+  async function loadRoomsFromBackend() {
+    try {
+      const rooms = await apiGetRooms();
+      if (Array.isArray(rooms)) {
+        appState.rooms = rooms.map(r => ({
+          id: r.id,
+          building: r.building,
+          floor: r.floor,
+          name: r.name,
+          capacity: r.capacity,
+          hasWebex: Boolean(r.hasWebex || r.has_webex),
+          hasProjector: Boolean(r.hasProjector || r.has_projector),
+          roomType: r.roomType || r.room_type || 'normal'
+        }));
+        saveState(appState);
+      }
+    } catch (error) {
+      console.error('Failed to load rooms from backend:', error);
     }
   }
 

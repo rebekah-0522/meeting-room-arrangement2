@@ -516,6 +516,21 @@ def update_room(room_id):
     if 'roomType' in data:
         updates.append('room_type = ?')
         params.append(data['roomType'])
+    if 'hasProjector' in data:
+        updates.append('has_projector = ?')
+        params.append(1 if data['hasProjector'] else 0)
+    if 'capacity' in data:
+        updates.append('capacity = ?')
+        params.append(data['capacity'])
+    if 'name' in data:
+        updates.append('name = ?')
+        params.append(data['name'])
+    if 'floor' in data:
+        updates.append('floor = ?')
+        params.append(data['floor'])
+    if 'building' in data:
+        updates.append('building = ?')
+        params.append(data['building'])
     
     if updates:
         params.append(room_id)
