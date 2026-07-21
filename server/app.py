@@ -203,14 +203,7 @@ def init_default_data():
                            room['has_webex'], room['has_projector'], room['room_type']))
             print('[DEBUG] Default rooms added')
     
-        c.execute(ph('SELECT COUNT(*) FROM users WHERE email = ?'), ('rebekah.xy.he@mail.foxconn.com',))
-        if c.fetchone()[0] == 0:
-            default_password = '123456'
-            hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            c.execute(ph('''INSERT INTO users (id, email, name, password, role, created_at)
-                         VALUES (?, ?, ?, ?, ?, ?)'''),
-                      (str(uuid.uuid4()), 'rebekah.xy.he@mail.foxconn.com', 'Rebekah', hashed_password, 'epm', datetime.now().isoformat()))
-            print('[DEBUG] Default user added')
+        print('[DEBUG] Skipping default user creation - users register with their own passwords')
     
         conn.commit()
         conn.close()
@@ -437,6 +430,16 @@ def get_user(user_id):
         return jsonify({'success': False, 'message': 'User not found'})
     
     return jsonify({'success': True, 'user': dict(user)})
+
+@app.route('/api/users/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(ph('DELETE FROM users WHERE id = ?'), (user_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'User deleted successfully'})
 
 @app.route('/api/users/<user_id>/password', methods=['PUT'])
 def update_password(user_id):
