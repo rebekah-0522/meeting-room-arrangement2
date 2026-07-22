@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Foxconn Meeting Room Booking System | C01 & C02 v2</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  
 </head>
 <body>
   <nav class="nav" id="mainNav" style="display:none">
@@ -50,7 +50,7 @@
         </p>
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">📱 Scan QR Code to access on mobile</p>
-          <div id="loginQrcode" style="display:inline-block;margin:0 auto"></div>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://meeting-room-arrangment2.zeabur.app/" alt="QR Code" style="display:block;margin:0 auto;border-radius:8px;">
           <p id="loginQrUrl" style="margin-top:8px;color:var(--text-secondary);font-size:11px;word-break:break-all"></p>
         </div>
       </div>
