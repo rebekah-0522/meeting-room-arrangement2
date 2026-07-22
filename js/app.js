@@ -290,32 +290,8 @@
 
   function generateLoginQRCode() {
     const url = window.location.origin + window.location.pathname;
-    const qrContainer = $('#loginQrcode');
     const qrUrlEl = $('#loginQrUrl');
-    if (!qrContainer) return;
-    
     if (qrUrlEl) qrUrlEl.textContent = url;
-    
-    if (typeof QRCode === 'undefined') {
-      qrContainer.innerHTML = '<div style="padding:20px;color:#999;">Loading QR code...</div>';
-      setTimeout(generateLoginQRCode, 200);
-      return;
-    }
-    
-    try {
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: url,
-        width: 180,
-        height: 180,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    } catch (err) {
-      console.error('Login QR code generation error:', err);
-      qrContainer.innerHTML = '<div style="padding:20px;color:#999;">QR code generation failed</div>';
-    }
   }
 
   async function enterApp() {
